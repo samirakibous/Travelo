@@ -8,10 +8,24 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register-dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+
+interface AuthenticatedRequest extends ExpressRequest {
+  user: {
+    _id: string;
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+    isActive: boolean;
+    profilePicture: string | null;
+  };
+}
 
 @Controller('auth')
 export class AuthController {
@@ -45,7 +59,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async me(@Request() req: any) {
+  async me(@Request() req: AuthenticatedRequest) {
     return req.user;
   }
 }

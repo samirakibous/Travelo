@@ -1,25 +1,20 @@
+'use client';
+
 import Link from 'next/link';
-import { Shield, Map, Users, Bell, Menu } from 'lucide-react';
+import { Shield, Map, Users, Bell, UserCircle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Header() {
+  const { user } = useAuth();
+
   return (
-    <header style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 64px', height: 64, background: '#fff',
-      boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-      position: 'sticky', top: 0, zIndex: 100,
-    }}>
-      {/* Logo */}
-      <Link href="/" style={{
-        display: 'flex', alignItems: 'center', gap: 8,
-        fontWeight: 800, fontSize: 20, color: '#1a73e8', textDecoration: 'none',
-      }}>
+    <header className="flex items-center justify-between px-16 h-16 bg-white shadow-sm sticky top-0 z-[100]">
+      <Link href="/" className="flex items-center gap-2 font-extrabold text-xl text-[#1a73e8]">
         <Shield size={22} color="#1a73e8" />
         Travelo
       </Link>
 
-      {/* Nav */}
-      <nav style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <nav className="flex items-center gap-1">
         {[
           { href: '#', icon: <Map size={16} />, label: 'Safety Map' },
           { href: '#', icon: <Users size={16} />, label: 'Guides' },
@@ -27,33 +22,42 @@ export default function Header() {
           { href: '#', label: 'Community' },
           { href: '#', label: 'Pricing' },
         ].map((item) => (
-          <Link key={item.label} href={item.href} style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '8px 14px', borderRadius: 8, fontSize: 14, fontWeight: 500,
-            color: '#444', textDecoration: 'none',
-          }}>
+          <Link
+            key={item.label}
+            href={item.href}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium text-[#444] hover:bg-gray-50 transition-colors"
+          >
             {item.icon}
             {item.label}
           </Link>
         ))}
       </nav>
 
-      {/* Actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <Link href="/login" style={{
-          padding: '8px 18px', border: '1px solid #e2e8f0',
-          borderRadius: 8, color: '#444', fontWeight: 600, fontSize: 14,
-          textDecoration: 'none',
-        }}>
-          Log in
-        </Link>
-        <Link href="/register" style={{
-          padding: '8px 18px', background: '#1a73e8',
-          borderRadius: 8, color: '#fff', fontWeight: 600, fontSize: 14,
-          textDecoration: 'none',
-        }}>
-          Sign up free
-        </Link>
+      <div className="flex items-center gap-2.5">
+        {user ? (
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 px-4 py-2 bg-[#f1f5f9] rounded-lg text-sm font-semibold text-[#1a1a2e] hover:bg-[#e2e8f0] transition-colors"
+          >
+            <UserCircle size={18} color="#1a73e8" />
+            {user.firstName}
+          </Link>
+        ) : (
+          <>
+            <Link
+              href="/login"
+              className="px-[18px] py-2 border border-[#e2e8f0] rounded-lg text-[#444] font-semibold text-sm hover:bg-gray-50 transition-colors"
+            >
+              Log in
+            </Link>
+            <Link
+              href="/register"
+              className="px-[18px] py-2 bg-[#1a73e8] rounded-lg text-white font-semibold text-sm hover:bg-blue-600 transition-colors"
+            >
+              Sign up free
+            </Link>
+          </>
+        )}
       </div>
     </header>
   );

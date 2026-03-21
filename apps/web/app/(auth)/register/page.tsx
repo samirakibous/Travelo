@@ -3,11 +3,21 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { register } from '../../../lib/auth';
+import { registerSchema } from '../../../lib/validations';
 import { Eye, EyeOff, Shield } from 'lucide-react';
+import { ValidationError } from 'yup';
+
+type FieldErrors = {
+  fullName?: string;
+  email?: string;
+  password?: string;
+  agreed?: string;
+};
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [error, setError] = useState('');
+  const [serverError, setServerError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState<'tourist' | 'guide'>('tourist');
   const [showPassword, setShowPassword] = useState(false);
@@ -15,215 +25,193 @@ export default function RegisterPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!agreed) return setError('Please agree to the Terms of Service.');
-    setError('');
-    setLoading(true);
+    setServerError('');
 
     const formData = new FormData(e.currentTarget);
-    const parts = (formData.get('fullName') as string).trim().split(' ');
-    const firstName = parts[0] || '';
-    const lastName = parts.slice(1).join(' ') || firstName;
-
-    const result = await register({
-      firstName,
-      lastName,
+    const values = {
+      fullName: (formData.get('fullName') as string).trim(),
       email: formData.get('email') as string,
       password: formData.get('password') as string,
-      role,
-    });
+      agreed,
+    };
+
+    try {
+      await registerSchema.validate(values, { abortEarly: false });
+    } catch (err) {
+      if (err instanceof ValidationError) {
+        const errors: FieldErrors = {};
+        err.inner.forEach((e) => {
+          if (e.path) errors[e.path as keyof FieldErrors] = e.message;
+        });
+        setFieldErrors(errors);
+        return;
+      }
+    }
+
+    setFieldErrors({});
+    setLoading(true);
+
+    const parts = values.fullName.split(' ');
+    const firstName = parts[0];
+    const lastName = parts.slice(1).join(' ') || firstName;
+
+    const result = await register({ firstName, lastName, email: values.email, password: values.password, role });
 
     if (result.success) {
       router.push('/dashboard');
       router.refresh();
     } else {
-      setError(result.error);
+      setServerError(result.error);
       setLoading(false);
     }
   }
 
+  const inputCls = (hasError: boolean) =>
+    `w-full px-3.5 py-3 border rounded-[10px] text-sm outline-none box-border ${hasError ? 'border-red-500' : 'border-[#e2e8f0]'}`;
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'sans-serif' }}>
+    <div className="flex min-h-screen font-sans">
 
       {/* Left panel */}
-      <div style={{
-        width: '42%', position: 'relative', overflow: 'hidden',
-        backgroundImage: 'linear-gradient(180deg, rgba(26,115,232,0.55) 0%, rgba(10,30,80,0.85) 100%), url(https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=900&q=80)',
-        backgroundSize: 'cover', backgroundPosition: 'center',
-        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-        padding: '36px 40px', color: '#fff',
-      }}>
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 18 }}>
+      <div
+        className="w-[42%] relative overflow-hidden flex flex-col justify-between p-10 text-white bg-cover bg-center"
+        style={{ backgroundImage: 'linear-gradient(180deg, rgba(26,115,232,0.55) 0%, rgba(10,30,80,0.85) 100%), url(https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=900&q=80)' }}
+      >
+        <div className="flex items-center gap-2 font-bold text-lg">
           <Shield size={20} color="#fff" />
           Travelo
         </div>
 
-        {/* Text */}
         <div>
-          <h2 style={{ fontSize: 34, fontWeight: 800, lineHeight: 1.2, marginBottom: 16 }}>
+          <h2 className="text-[34px] font-extrabold leading-tight mb-4">
             Start your journey<br />with Travelo.
           </h2>
-          <p style={{ fontSize: 14, opacity: 0.85, lineHeight: 1.7, marginBottom: 32 }}>
+          <p className="text-sm opacity-85 leading-[1.7] mb-8">
             Join a global community of explorers and local experts. Experience the world like a local, or share your knowledge as a guide.
           </p>
-          {/* Avatars */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ display: 'flex' }}>
+          <div className="flex items-center gap-3">
+            <div className="flex">
               {['#4f9ef8', '#a78bfa', '#34d399'].map((c, i) => (
-                <div key={i} style={{
-                  width: 36, height: 36, borderRadius: '50%', background: c,
-                  border: '2px solid #fff', marginLeft: i > 0 ? -10 : 0,
-                }} />
+                <div key={i} className="w-9 h-9 rounded-full border-2 border-white" style={{ background: c, marginLeft: i > 0 ? -10 : 0 }} />
               ))}
             </div>
-            <p style={{ fontSize: 13, opacity: 0.9 }}>Trusted by 50,000+ travelers worldwide</p>
+            <p className="text-[13px] opacity-90">Trusted by 50,000+ travelers worldwide</p>
           </div>
         </div>
 
-        {/* Footer */}
-        <p style={{ fontSize: 11, opacity: 0.6 }}>© 2026 Travelo Inc. All rights reserved.</p>
+        <p className="text-[11px] opacity-60">© 2026 Travelo Inc. All rights reserved.</p>
       </div>
 
       {/* Right panel */}
-      <div style={{
-        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '48px 64px', background: '#fff',
-      }}>
-        <div style={{ width: '100%', maxWidth: 420 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 6 }}>Create your account</h1>
-          <p style={{ fontSize: 14, color: '#888', marginBottom: 28 }}>
-            Join Travelo and start planning your next adventure.
-          </p>
+      <div className="flex-1 flex items-center justify-center px-16 py-12 bg-white">
+        <div className="w-full max-w-[420px]">
+          <h1 className="text-[26px] font-extrabold mb-1.5">Créer votre compte</h1>
+          <p className="text-sm text-[#888] mb-7">Rejoignez Travelo et planifiez votre prochaine aventure.</p>
 
           {/* Role tabs */}
-          <div style={{
-            display: 'flex', background: '#f1f5f9', borderRadius: 10,
-            padding: 4, marginBottom: 24,
-          }}>
+          <div className="flex bg-[#f1f5f9] rounded-[10px] p-1 mb-6">
             {(['tourist', 'guide'] as const).map((r) => (
               <button
                 key={r}
+                type="button"
                 onClick={() => setRole(r)}
-                style={{
-                  flex: 1, padding: '9px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
-                  fontWeight: 600, fontSize: 14, transition: 'all 0.2s',
-                  background: role === r ? '#fff' : 'transparent',
-                  color: role === r ? '#1a73e8' : '#888',
-                  boxShadow: role === r ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
-                }}
+                className={`flex-1 py-2.5 rounded-lg border-none cursor-pointer font-semibold text-sm transition-all ${
+                  role === r ? 'bg-white text-[#1a73e8] shadow-sm' : 'bg-transparent text-[#888]'
+                }`}
               >
-                {r === 'tourist' ? 'Tourist' : 'Certified Guide'}
+                {r === 'tourist' ? 'Touriste' : 'Guide certifié'}
               </button>
             ))}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-            <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
-            <span style={{ fontSize: 12, color: '#aaa', whiteSpace: 'nowrap' }}>OR CONTINUE WITH</span>
-            <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex-1 h-px bg-[#e2e8f0]" />
+            <span className="text-xs text-[#aaa] whitespace-nowrap tracking-widest">OU CONTINUER AVEC</span>
+            <div className="flex-1 h-px bg-[#e2e8f0]" />
           </div>
 
-          {error && (
-            <p style={{ color: '#e53935', fontSize: 13, marginBottom: 16, background: '#fff2f2', padding: '10px 14px', borderRadius: 8 }}>
-              {error}
-            </p>
+          {serverError && (
+            <p className="text-red-600 text-[13px] mb-4 bg-red-50 px-3.5 py-2.5 rounded-lg">{serverError}</p>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
-                Full Name
-              </label>
+              <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">Nom complet</label>
               <input
                 name="fullName"
                 type="text"
-                placeholder="John Doe"
-                required
-                style={{
-                  width: '100%', padding: '12px 14px', border: '1px solid #e2e8f0',
-                  borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box',
-                }}
+                placeholder="Jean Dupont"
+                className={inputCls(!!fieldErrors.fullName)}
               />
+              {fieldErrors.fullName && <p className="text-red-500 text-xs mt-1">{fieldErrors.fullName}</p>}
             </div>
 
             <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
-                Email Address
-              </label>
+              <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">Adresse email</label>
               <input
                 name="email"
-                type="email"
+                type="text"
                 placeholder="john@example.com"
-                required
-                style={{
-                  width: '100%', padding: '12px 14px', border: '1px solid #e2e8f0',
-                  borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box',
-                }}
+                className={inputCls(!!fieldErrors.email)}
               />
+              {fieldErrors.email && <p className="text-red-500 text-xs mt-1">{fieldErrors.email}</p>}
             </div>
 
             <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
-                Password
-              </label>
-              <div style={{ position: 'relative' }}>
+              <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">Mot de passe</label>
+              <div className="relative">
                 <input
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  required
-                  minLength={8}
-                  style={{
-                    width: '100%', padding: '12px 44px 12px 14px', border: '1px solid #e2e8f0',
-                    borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box',
-                  }}
+                  className={`${inputCls(!!fieldErrors.password)} pr-11`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#aaa' }}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#aaa] bg-transparent border-none cursor-pointer"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              <p style={{ fontSize: 11, color: '#aaa', marginTop: 5 }}>
-                Use 8 or more characters with a mix of letters, numbers & symbols.
-              </p>
+              {fieldErrors.password ? (
+                <p className="text-red-500 text-xs mt-1">{fieldErrors.password}</p>
+              ) : (
+                <p className="text-[11px] text-[#aaa] mt-1">8+ caractères, une majuscule, un chiffre, un caractère spécial.</p>
+              )}
             </div>
 
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontSize: 13, color: '#555' }}>
-              <input
-                type="checkbox"
-                checked={agreed}
-                onChange={(e) => setAgreed(e.target.checked)}
-                style={{ marginTop: 2, accentColor: '#1a73e8' }}
-              />
-              I agree to the{' '}
-              <span style={{ color: '#1a73e8', textDecoration: 'underline', cursor: 'pointer' }}>Terms of Service</span>
-              {' '}and{' '}
-              <span style={{ color: '#1a73e8', textDecoration: 'underline', cursor: 'pointer' }}>Privacy Policy</span>
-            </label>
+            <div>
+              <label className="flex items-start gap-2.5 cursor-pointer text-[13px] text-[#555]">
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                  className="mt-0.5 accent-[#1a73e8]"
+                />
+                J&apos;accepte les{' '}
+                <span className="text-[#1a73e8] underline cursor-pointer">Conditions d&apos;utilisation</span>
+                {' '}et la{' '}
+                <span className="text-[#1a73e8] underline cursor-pointer">Politique de confidentialité</span>
+              </label>
+              {fieldErrors.agreed && <p className="text-red-500 text-xs mt-1">{fieldErrors.agreed}</p>}
+            </div>
 
             <button
               type="submit"
               disabled={loading}
-              style={{
-                width: '100%', padding: '13px 0', background: '#1a73e8', color: '#fff',
-                border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15,
-                cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1,
-              }}
+              className="w-full py-3.5 bg-[#1a73e8] text-white border-none rounded-[10px] font-bold text-[15px] cursor-pointer hover:bg-blue-600 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? 'Création en cours...' : 'Créer mon compte'}
             </button>
           </form>
 
-          <p style={{ textAlign: 'center', fontSize: 13, color: '#888', marginTop: 20 }}>
-            Already have an account?{' '}
-            <a href="/login" style={{ color: '#1a73e8', fontWeight: 600, textDecoration: 'none' }}>Log in</a>
+          <p className="text-center text-[13px] text-[#888] mt-5">
+            Déjà un compte ?{' '}
+            <a href="/login" className="text-[#1a73e8] font-semibold">Se connecter</a>
           </p>
         </div>
       </div>
-
     </div>
   );
 }

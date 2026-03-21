@@ -1,27 +1,23 @@
 import Link from 'next/link';
-import { Shield, Mail, Phone, MapPin, Twitter, Instagram, Linkedin, Facebook } from 'lucide-react';
+import { Shield, Mail, Phone, MapPin, X, Camera, Briefcase, Globe } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer style={{ background: '#0f172a', color: '#94a3b8', fontFamily: 'sans-serif' }}>
-      {/* Main footer */}
-      <div style={{ padding: '64px', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 48 }}>
+    <footer className="bg-[#0f172a] text-[#94a3b8]">
+      <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-12 px-16 py-16">
 
         {/* Brand */}
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <div className="flex items-center gap-2 mb-4">
             <Shield size={22} color="#1a73e8" />
-            <span style={{ color: '#fff', fontWeight: 800, fontSize: 20 }}>Travelo</span>
+            <span className="text-white font-extrabold text-xl">Travelo</span>
           </div>
-          <p style={{ fontSize: 14, lineHeight: 1.8, maxWidth: 280, marginBottom: 24 }}>
+          <p className="text-sm leading-[1.8] max-w-[280px] mb-6">
             Making the world more accessible and safer for everyone through technology and community-driven insights.
           </p>
-          <div style={{ display: 'flex', gap: 12 }}>
-            {[Facebook, Twitter, Instagram, Linkedin].map((Icon, i) => (
-              <div key={i} style={{
-                width: 36, height: 36, borderRadius: '50%', background: '#1e293b',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-              }}>
+          <div className="flex gap-3">
+            {[Globe, X, Camera, Briefcase].map((Icon, i) => (
+              <div key={i} className="w-9 h-9 rounded-full bg-[#1e293b] flex items-center justify-center cursor-pointer hover:bg-[#334155] transition-colors">
                 <Icon size={16} color="#94a3b8" />
               </div>
             ))}
@@ -30,12 +26,9 @@ export default function Footer() {
 
         {/* Platform */}
         <div>
-          <p style={{ color: '#fff', fontWeight: 700, fontSize: 14, marginBottom: 20 }}>Platform</p>
+          <p className="text-white font-bold text-sm mb-5">Platform</p>
           {['How it Works', 'Verified Guides', 'Safety Index', 'Pricing Plans'].map((item) => (
-            <Link key={item} href="#" style={{
-              display: 'block', fontSize: 14, color: '#94a3b8',
-              marginBottom: 12, textDecoration: 'none',
-            }}>
+            <Link key={item} href="#" className="block text-sm text-[#94a3b8] mb-3 hover:text-white transition-colors">
               {item}
             </Link>
           ))}
@@ -43,12 +36,9 @@ export default function Footer() {
 
         {/* Resources */}
         <div>
-          <p style={{ color: '#fff', fontWeight: 700, fontSize: 14, marginBottom: 20 }}>Resources</p>
+          <p className="text-white font-bold text-sm mb-5">Resources</p>
           {['Safety Tips', 'Destination Guides', 'Blog', 'Help Center'].map((item) => (
-            <Link key={item} href="#" style={{
-              display: 'block', fontSize: 14, color: '#94a3b8',
-              marginBottom: 12, textDecoration: 'none',
-            }}>
+            <Link key={item} href="#" className="block text-sm text-[#94a3b8] mb-3 hover:text-white transition-colors">
               {item}
             </Link>
           ))}
@@ -56,17 +46,17 @@ export default function Footer() {
 
         {/* Contact */}
         <div>
-          <p style={{ color: '#fff', fontWeight: 700, fontSize: 14, marginBottom: 20 }}>Contact</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
+          <p className="text-white font-bold text-sm mb-5">Contact</p>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2.5 text-sm">
               <Mail size={15} color="#1a73e8" />
               support@travelo.com
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
+            <div className="flex items-center gap-2.5 text-sm">
               <Phone size={15} color="#1a73e8" />
               +1 (800) SAFE-TRV
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
+            <div className="flex items-center gap-2.5 text-sm">
               <MapPin size={15} color="#1a73e8" />
               San Francisco, CA
             </div>
@@ -75,15 +65,11 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div style={{
-        borderTop: '1px solid #1e293b', padding: '20px 64px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        fontSize: 13,
-      }}>
+      <div className="border-t border-[#1e293b] px-16 py-5 flex items-center justify-between text-[13px]">
         <p>© 2026 Travelo Inc. All rights reserved.</p>
-        <div style={{ display: 'flex', gap: 28 }}>
+        <div className="flex gap-7">
           {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((item) => (
-            <Link key={item} href="#" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+            <Link key={item} href="#" className="text-[#94a3b8] hover:text-white transition-colors">
               {item}
             </Link>
           ))}

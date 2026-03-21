@@ -20,7 +20,7 @@ import { User, UserSchema } from '../user/entities/user.entity';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET') || 'defaultSecretKey',
-        signOptions: { expiresIn: '59m' },
+        signOptions: { expiresIn: (configService.get<string>('JWT_EXPIRES_IN') || '1h') as any },
       }),
       inject: [ConfigService],
     }),
