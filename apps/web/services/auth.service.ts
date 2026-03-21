@@ -1,4 +1,5 @@
-import { api, getAuthApi } from './api';
+import { api } from './api';
+import { getAuthApi } from './api.server';
 
 export type RegisterPayload = {
   firstName: string;
@@ -10,6 +11,7 @@ export type RegisterPayload = {
 
 export type AuthResponse = {
   accessToken: string;
+  refreshToken: string;
   user: {
     id: string;
     firstName: string;
@@ -38,4 +40,15 @@ export async function apiGetMe(): Promise<AuthResponse['user']> {
 export async function apiLogout(userId: string): Promise<void> {
   const authApi = await getAuthApi();
   await authApi.post('/auth/logout', { userId });
+}
+
+export async function apiRefreshToken(
+  userId: string,
+  refreshToken: string,
+): Promise<{ accessToken: string; refreshToken: string }> {
+  const { data } = await api.post<{ accessToken: string; refreshToken: string }>(
+    '/auth/refresh',
+    { userId, refreshToken },
+  );
+  return data;
 }
