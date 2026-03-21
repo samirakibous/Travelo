@@ -46,7 +46,7 @@ export default function Header() {
         {user ? (
           <>
             <Link
-              href="/dashboard"
+              href="/dashboard/profile"
               className="flex items-center gap-2 px-4 py-2 bg-[#f1f5f9] rounded-lg text-sm font-semibold text-[#1a1a2e] hover:bg-[#e2e8f0] transition-colors"
             >
               <UserCircle size={18} color="#1a73e8" />
