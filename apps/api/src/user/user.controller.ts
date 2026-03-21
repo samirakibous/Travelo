@@ -1,34 +1,90 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Post,
+  Request,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Request as ExpressRequest } from 'express';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
+import * as fs from 'fs';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
-@Controller('user')
+interface AuthRequest extends ExpressRequest {
+  user: { id: string; role: string };
+}
+
+const avatarStorage = diskStorage({
+  destination: (_req, _file, cb) => {
+    const dir = join(process.cwd(), 'uploads', 'avatars');
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req: any, file, cb) => {
+    const ext = extname(file.originalname).toLowerCase();
+    cb(null, `${req.user.id}-${Date.now()}${ext}`);
+  },
+});
+
+@Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  getProfile(@Request() req: AuthRequest) {
+    return this.userService.getProfile(req.user.id);
   }
 
-  @Get()
-  findAll() {
-    return this.userService.findAll();
+  @UseGuards(JwtAuthGuard)
+  @Patch('me')
+  @HttpCode(HttpStatus.OK)
+  updateProfile(@Request() req: AuthRequest, @Body() dto: UpdateProfileDto) {
+    return this.userService.updateProfile(req.user.id, dto);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
+  @UseGuards(JwtAuthGuard)
+  @Patch('me/password')
+  @HttpCode(HttpStatus.OK)
+  changePassword(@Request() req: AuthRequest, @Body() dto: ChangePasswordDto) {
+    return this.userService.changePassword(req.user.id, dto);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+  @UseGuards(JwtAuthGuard)
+  @Post('me/avatar')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(
+    FileInterceptor('avatar', {
+      storage: avatarStorage,
+      fileFilter: (_req, file, cb) => {
+        if (!file.mimetype.match(/^image\/(jpeg|png|webp)$/)) {
+          return cb(
+            new BadRequestException('Seules les images JPEG, PNG et WebP sont acceptées'),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  uploadAvatar(
+    @Request() req: AuthRequest,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('Aucun fichier reçu');
+    return this.userService.updateAvatar(req.user.id, `/uploads/avatars/${file.filename}`);
   }
 }

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const publicRoutes = ['/login', '/register'];
-const protectedRoutes = ['/dashboard'];
+const protectedRoutes = ['/dashboard', '/profile'];
 
 function decodeJwtPayload(token: string): { sub: string; exp: number } | null {
   try {
