@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 import { User } from '../user/entities/user.entity';
 import { RegisterDto } from './dto/register-dto';
@@ -16,20 +17,15 @@ export class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User & { _id: any }>,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
-  async register(registerDto: RegisterDto): Promise<{
-    message: string;
-    accessToken: string;
-    refreshToken: string;
-    user: Partial<User>;
-  }> {
+  async register(registerDto: RegisterDto) {
     const existingUser = await this.userModel.findOne({ email: registerDto.email });
     if (existingUser) {
       throw new ConflictException('Email already exists');
     }
 
-    // Premier utilisateur = ADMIN automatique
     const userCount = await this.userModel.countDocuments();
     let role: Role;
     if (userCount === 0) {
@@ -61,6 +57,7 @@ export class AuthService {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
       user: {
+        id: user._id.toString(),
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -86,7 +83,9 @@ export class AuthService {
     return {
       message: 'Login successful',
       accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       user: {
+        id: user._id.toString(),
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -97,9 +96,11 @@ export class AuthService {
 
   async getTokens(userId: string, email: string, role: Role) {
     const payload = { sub: userId, email, role };
+    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '1h';
+    const refreshExpiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d';
 
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '59m' });
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+    const accessToken = this.jwtService.sign(payload, { expiresIn } as any);
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: refreshExpiresIn } as any);
 
     return { accessToken, refreshToken };
   }
@@ -108,6 +109,7 @@ export class AuthService {
     const hashedToken = await bcrypt.hash(refreshToken, BCRYPT_ROUNDS);
     await this.userModel.findByIdAndUpdate(userId, { currentHashedRefreshToken: hashedToken });
   }
+
   async refreshTokens(userId: string, refreshToken: string) {
     const user = await this.userModel.findById(userId);
     if (!user || !user.currentHashedRefreshToken) {

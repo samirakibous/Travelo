@@ -1,4 +1,4 @@
-import { getAuthApi } from './api';
+import { getAuthApi } from './api.server';
 
 export type User = {
   id: string;
