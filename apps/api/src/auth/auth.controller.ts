@@ -16,7 +16,6 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 interface AuthenticatedRequest extends ExpressRequest {
   user: {
-    _id: string;
     id: string;
     firstName: string;
     lastName: string;

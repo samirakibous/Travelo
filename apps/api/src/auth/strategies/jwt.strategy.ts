@@ -10,7 +10,7 @@ import { Model } from "mongoose";
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private configService: ConfigService,
+    configService: ConfigService,
     @InjectModel(User.name) private userModel: Model<User>,
   ) {
     super({
@@ -27,6 +27,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         'User account associated with this token no longer exists.',
       );
     }
-    return user;
+    return {
+      id: (user._id as any).toString(),
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      isActive: user.isActive,
+      profilePicture: user.profilePicture,
+    };
   }
 }
