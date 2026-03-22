@@ -9,6 +9,7 @@ import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { GuideModule } from './guide/guide.module';
 import { SafeZoneModule } from './safety-zone/safety-zone.module';
+import { AdviceModule } from './advice/advice.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { SafeZoneModule } from './safety-zone/safety-zone.module';
     PostModule,
     GuideModule,
     SafeZoneModule,
+    AdviceModule,
   ],
   controllers: [AppController],
   providers: [AppService],
