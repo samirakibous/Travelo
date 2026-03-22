@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { GuideModule } from './guide/guide.module';
+import { SafeZoneModule } from './safety-zone/safety-zone.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { GuideModule } from './guide/guide.module';
     UserModule,
     PostModule,
     GuideModule,
+    SafeZoneModule,
   ],
   controllers: [AppController],
   providers: [AppService],
