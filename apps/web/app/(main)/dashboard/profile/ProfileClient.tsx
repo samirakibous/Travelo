@@ -4,7 +4,9 @@ import { useRef, useState, useTransition } from 'react';
 import { Camera, Save, Lock, User, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { updateProfile, changePassword, uploadAvatar } from '../../../../lib/user';
+import GuideProfileForm from '../guide-profile/GuideProfileForm';
 import type { User as UserType } from '../../../../types/auth';
+import type { GuideProfile } from '../../../../types/guide';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:3000';
 
@@ -21,7 +23,7 @@ function Alert({ type, message }: { type: 'success' | 'error'; message: string }
   );
 }
 
-export default function ProfileClient({ initialUser }: { initialUser: UserType }) {
+export default function ProfileClient({ initialUser, guideProfile }: { initialUser: UserType; guideProfile: GuideProfile | null }) {
   const { user, setUser } = useAuth();
   const currentUser = user ?? initialUser;
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -186,6 +188,17 @@ export default function ProfileClient({ initialUser }: { initialUser: UserType }
           {infoLoading ? 'Enregistrement...' : 'Enregistrer'}
         </button>
       </form>
+
+      {/* Profil guide */}
+      {currentUser.role === 'guide' && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-4">
+          <div className="flex items-center gap-2 mb-1">
+            <User size={16} color="#1a73e8" />
+            <h2 className="font-bold text-[#1a1a2e]">Profil guide</h2>
+          </div>
+          <GuideProfileForm existing={guideProfile} />
+        </div>
+      )}
 
       {/* Mot de passe */}
       <form onSubmit={handlePasswordSubmit} className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-4">
