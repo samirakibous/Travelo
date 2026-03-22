@@ -25,7 +25,7 @@ export default function Header() {
 
       <nav className="flex items-center gap-1">
         {[
-          { href: '#', icon: <Map size={16} />, label: 'Safety Map' },
+          { href: '/map', icon: <Map size={16} />, label: 'Safety Map' },
           { href: '/guides', icon: <Users size={16} />, label: 'Guides' },
           { href: '#', icon: <Bell size={16} />, label: 'Alerts' },
           { href: '/community', label: 'Communauté' },
