@@ -1,0 +1,218 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import L from 'leaflet';
+import { MapContainer, TileLayer, CircleMarker, Polygon, Marker, Popup, useMap } from 'react-leaflet';
+import { Locate } from 'lucide-react';
+import 'leaflet/dist/leaflet.css';
+import type { SafeZone } from '../../../types/safety-zone';
+import type { Advice } from '../../../types/advice';
+
+// ── Zone colors ──────────────────────────────────────────────
+const RISK_COLORS = {
+  safe:    { color: '#16a34a', fillColor: '#22c55e' },
+  caution: { color: '#d97706', fillColor: '#f59e0b' },
+  danger:  { color: '#dc2626', fillColor: '#ef4444' },
+} as const;
+
+const RISK_LABELS: Record<string, string> = { safe: 'Sûre', caution: 'Prudence', danger: 'Danger' };
+
+const ZONE_CATEGORY_LABELS: Record<string, string> = {
+  tourist: 'Touristique', transport: 'Transport',
+  accommodation: 'Hébergement', food: 'Restauration', general: 'Général',
+};
+
+// ── Advice colors ─────────────────────────────────────────────
+const ADVICE_COLORS: Record<string, string> = {
+  safety: '#dc2626', health: '#16a34a', transport: '#2563eb',
+  culture: '#9333ea', emergency: '#ea580c',
+};
+
+const ADVICE_CATEGORY_LABELS: Record<string, string> = {
+  safety: 'Sécurité', health: 'Santé', transport: 'Transport',
+  culture: 'Culture', emergency: 'Urgence',
+};
+
+function createAdviceIcon(category: string, isCertified: boolean): L.DivIcon {
+  const color = ADVICE_COLORS[category] ?? '#6b7280';
+  const badge = isCertified
+    ? `<span style="position:absolute;top:-4px;right:-4px;width:10px;height:10px;background:#1a73e8;border-radius:50%;border:1.5px solid white;"></span>`
+    : '';
+  return L.divIcon({
+    className: '',
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    html: `
+      <div style="position:relative;width:28px;height:28px;">
+        <div style="width:28px;height:28px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;">
+          <svg width="13" height="13" fill="white" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 4 12.9V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.1A7 7 0 0 1 12 2zm-1 16h2v1a1 1 0 0 1-2 0v-1z"/></svg>
+        </div>
+        ${badge}
+      </div>`,
+  });
+}
+
+// ── Internal components ───────────────────────────────────────
+function MapResizer() {
+  const map = useMap();
+  useEffect(() => {
+    map.invalidateSize();
+    const observer = new ResizeObserver(() => map.invalidateSize());
+    observer.observe(map.getContainer());
+    return () => observer.disconnect();
+  }, [map]);
+  return null;
+}
+
+function GeolocationController() {
+  const map = useMap();
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => map.setView([coords.latitude, coords.longitude], 13),
+      () => {},
+    );
+  }, [map]);
+  return null;
+}
+
+function LocateButton() {
+  const map = useMap();
+  return (
+    <div className="leaflet-top leaflet-right" style={{ marginTop: 80 }}>
+      <div className="leaflet-control leaflet-bar">
+        <button
+          onClick={() => map.locate({ setView: true, maxZoom: 15 })}
+          title="Ma position"
+          style={{ width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'white', border: 'none', cursor: 'pointer' }}
+        >
+          <Locate size={16} color="#555" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ZonePopup({ zone }: { zone: SafeZone }) {
+  const style = RISK_COLORS[zone.riskLevel] ?? RISK_COLORS.safe;
+  return (
+    <Popup>
+      <div style={{ minWidth: 180 }}>
+        <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 4, color: '#1a1a2e' }}>{zone.name}</p>
+        {zone.description && <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 6 }}>{zone.description}</p>}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: style.color, background: style.color + '22', padding: '2px 8px', borderRadius: 99 }}>
+            {RISK_LABELS[zone.riskLevel] ?? zone.riskLevel}
+          </span>
+          <span style={{ fontSize: 11, color: '#6b7280', background: '#f3f4f6', padding: '2px 8px', borderRadius: 99 }}>
+            {ZONE_CATEGORY_LABELS[zone.category] ?? zone.category}
+          </span>
+        </div>
+        <div style={{ marginTop: 6, fontSize: 11, color: '#9ca3af' }}>
+          {zone.activeDay && zone.activeNight ? 'Jour & Nuit' : zone.activeDay ? 'Jour uniquement' : 'Nuit uniquement'}
+        </div>
+      </div>
+    </Popup>
+  );
+}
+
+const API_URL = (process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')) ?? 'http://localhost:3000';
+
+function AdvicePopup({ advice }: { advice: Advice }) {
+  const color = ADVICE_COLORS[advice.category] ?? '#6b7280';
+  return (
+    <Popup>
+      <div style={{ minWidth: 200, maxWidth: 260 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color, background: color + '18', padding: '2px 8px', borderRadius: 99 }}>
+            {ADVICE_CATEGORY_LABELS[advice.category] ?? advice.category}
+          </span>
+          {advice.isCertifiedGuide && (
+            <span style={{ fontSize: 11, color: '#1a73e8', fontWeight: 600 }}>✓ Certifié</span>
+          )}
+        </div>
+        <p style={{ fontWeight: 700, fontSize: 14, color: '#1a1a2e', marginBottom: 4 }}>{advice.title}</p>
+        <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 8, lineHeight: 1.5 }}>{advice.content}</p>
+
+        {advice.mediaUrls.length > 0 && (
+          <img
+            src={`${API_URL}${advice.mediaUrls[0]}`}
+            alt=""
+            style={{ width: '100%', borderRadius: 8, objectFit: 'cover', maxHeight: 120, marginBottom: 8 }}
+          />
+        )}
+
+        <div style={{ fontSize: 11, color: '#9ca3af' }}>
+          Par {advice.author.firstName} {advice.author.lastName}
+          {advice.address && <> · {advice.address}</>}
+        </div>
+      </div>
+    </Popup>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────
+type Props = {
+  zones: SafeZone[];
+  advices: Advice[];
+  loading?: boolean;
+};
+
+export default function SafetyMap({ zones, advices, loading }: Props) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return null;
+
+  return (
+    <div style={{ position: 'absolute', inset: 16, borderRadius: 16, overflow: 'hidden' }}>
+      {loading && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,.6)', backdropFilter: 'blur(4px)' }}>
+          <span style={{ fontSize: 13, color: '#6b7280' }}>Chargement...</span>
+        </div>
+      )}
+      <MapContainer center={[20, 0]} zoom={3} style={{ width: '100%', height: '100%' }}>
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <MapResizer />
+        <GeolocationController />
+        <LocateButton />
+
+        {/* Safety zones */}
+        {zones.map((zone) => {
+          const style = RISK_COLORS[zone.riskLevel] ?? RISK_COLORS.safe;
+
+          if (zone.type === 'point' && zone.lat !== undefined && zone.lng !== undefined) {
+            return (
+              <CircleMarker key={zone._id} center={[zone.lat, zone.lng]} radius={14}
+                pathOptions={{ color: style.color, fillColor: style.fillColor, fillOpacity: 0.4, weight: 2 }}>
+                <ZonePopup zone={zone} />
+              </CircleMarker>
+            );
+          }
+          if (zone.type === 'polygon' && zone.coordinates?.length) {
+            return (
+              <Polygon key={zone._id} positions={zone.coordinates.map((c) => [c.lat, c.lng] as [number, number])}
+                pathOptions={{ color: style.color, fillColor: style.fillColor, fillOpacity: 0.25, weight: 2 }}>
+                <ZonePopup zone={zone} />
+              </Polygon>
+            );
+          }
+          return null;
+        })}
+
+        {/* Advice markers */}
+        {advices.map((advice) => (
+          <Marker
+            key={advice._id}
+            position={[advice.lat, advice.lng]}
+            icon={createAdviceIcon(advice.category, advice.isCertifiedGuide)}
+          >
+            <AdvicePopup advice={advice} />
+          </Marker>
+        ))}
+      </MapContainer>
+    </div>
+  );
+}

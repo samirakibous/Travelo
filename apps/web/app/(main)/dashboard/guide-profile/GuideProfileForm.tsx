@@ -1,0 +1,248 @@
+'use client';
+
+import { useState, useTransition } from 'react';
+import { Save, Plus, X, MapPin, DollarSign, BookOpen, Globe, Star, AlertCircle, CheckCircle } from 'lucide-react';
+import { createGuideProfile, updateGuideProfile } from '../../../../lib/guide';
+import type { GuideProfilePayload } from '../../../../lib/guide';
+import type { GuideProfile } from '../../../../types/guide';
+
+const EXPERTISE_OPTIONS = [
+  { value: 'elite', label: 'Elite', description: 'Guide expert internationalement reconnu' },
+  { value: 'professional', label: 'Professionnel', description: 'Guide certifié avec expérience avérée' },
+  { value: 'local', label: 'Local', description: 'Connaissance approfondie de la région' },
+] as const;
+
+const COMMON_LANGUAGES = ['Français', 'Anglais', 'Arabe', 'Espagnol', 'Allemand', 'Italien', 'Portugais', 'Mandarin'];
+
+function Alert({ type, message }: { type: 'success' | 'error'; message: string }) {
+  return (
+    <div
+      className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm ${
+        type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+      }`}
+    >
+      {type === 'success' ? <CheckCircle size={15} /> : <AlertCircle size={15} />}
+      {message}
+    </div>
+  );
+}
+
+function TagInput({
+  label,
+  icon,
+  tags,
+  onChange,
+  placeholder,
+  suggestions,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  tags: string[];
+  onChange: (tags: string[]) => void;
+  placeholder: string;
+  suggestions?: string[];
+}) {
+  const [input, setInput] = useState('');
+
+  const addTag = (value: string) => {
+    const trimmed = value.trim();
+    if (trimmed && !tags.includes(trimmed)) {
+      onChange([...tags, trimmed]);
+    }
+    setInput('');
+  };
+
+  const removeTag = (tag: string) => onChange(tags.filter((t) => t !== tag));
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-2">
+        {icon}
+        <label className="text-sm font-medium text-[#1a1a2e]">{label}</label>
+      </div>
+      <div className="flex flex-wrap gap-2 p-3 rounded-xl border border-gray-200 min-h-[46px]">
+        {tags.map((tag) => (
+          <span
+            key={tag}
+            className="flex items-center gap-1 px-2.5 py-1 bg-[#e8f0fe] text-[#1a73e8] text-xs font-medium rounded-lg"
+          >
+            {tag}
+            <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-800">
+              <X size={11} />
+            </button>
+          </span>
+        ))}
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ',') {
+              e.preventDefault();
+              addTag(input);
+            }
+          }}
+          placeholder={tags.length === 0 ? placeholder : ''}
+          className="flex-1 min-w-[120px] text-sm outline-none bg-transparent"
+        />
+      </div>
+      {suggestions && (
+        <div className="flex flex-wrap gap-1.5 mt-1">
+          {suggestions
+            .filter((s) => !tags.includes(s))
+            .map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => addTag(s)}
+                className="px-2.5 py-1 rounded-lg border border-gray-200 text-xs text-gray-500 hover:border-[#1a73e8] hover:text-[#1a73e8] transition-colors flex items-center gap-1"
+              >
+                <Plus size={10} />
+                {s}
+              </button>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function GuideProfileForm({ existing }: { existing: GuideProfile | null }) {
+  const isEdit = existing !== null;
+
+  const [form, setForm] = useState<GuideProfilePayload>({
+    bio: existing?.bio ?? '',
+    location: existing?.location ?? '',
+    hourlyRate: existing?.hourlyRate ?? 50,
+    specialties: existing?.specialties ?? [],
+    languages: existing?.languages ?? [],
+    expertiseLevel: existing?.expertiseLevel ?? 'local',
+  });
+
+  const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    startTransition(async () => {
+      const result = isEdit ? await updateGuideProfile(form) : await createGuideProfile(form);
+      if (result.success) {
+        setStatus({ type: 'success', message: isEdit ? 'Profil mis à jour avec succès' : 'Profil guide créé avec succès' });
+      } else {
+        setStatus({ type: 'error', message: result.error });
+      }
+      setTimeout(() => setStatus(null), 5000);
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      {status && <Alert type={status.type} message={status.message} />}
+
+      {/* Niveau d'expertise */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <Star size={16} color="#1a73e8" />
+          <label className="text-sm font-medium text-[#1a1a2e]">Niveau d&apos;expertise</label>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {EXPERTISE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setForm({ ...form, expertiseLevel: opt.value })}
+              className={`p-3 rounded-xl border-2 text-left transition-colors ${
+                form.expertiseLevel === opt.value
+                  ? 'border-[#1a73e8] bg-[#e8f0fe]'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <p className={`text-sm font-semibold ${form.expertiseLevel === opt.value ? 'text-[#1a73e8]' : 'text-[#1a1a2e]'}`}>
+                {opt.label}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">{opt.description}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Localisation & Tarif */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <MapPin size={16} color="#1a73e8" />
+            <label className="text-sm font-medium text-[#1a1a2e]">Localisation</label>
+          </div>
+          <input
+            type="text"
+            value={form.location}
+            onChange={(e) => setForm({ ...form, location: e.target.value })}
+            placeholder="ex: Paris, France"
+            required
+            className="px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1a73e8] transition-colors"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <DollarSign size={16} color="#1a73e8" />
+            <label className="text-sm font-medium text-[#1a1a2e]">Tarif horaire (€)</label>
+          </div>
+          <input
+            type="number"
+            min={1}
+            value={form.hourlyRate}
+            onChange={(e) => setForm({ ...form, hourlyRate: Number(e.target.value) })}
+            required
+            className="px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1a73e8] transition-colors"
+          />
+        </div>
+      </div>
+
+      {/* Bio */}
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
+          <BookOpen size={16} color="#1a73e8" />
+          <label className="text-sm font-medium text-[#1a1a2e]">Biographie</label>
+        </div>
+        <textarea
+          value={form.bio}
+          onChange={(e) => setForm({ ...form, bio: e.target.value })}
+          placeholder="Décrivez votre expérience, vos destinations favorites, ce qui vous rend unique..."
+          required
+          rows={4}
+          className="px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1a73e8] transition-colors resize-none"
+        />
+        <p className="text-xs text-gray-400">{form.bio.length} caractères</p>
+      </div>
+
+      {/* Spécialités */}
+      <TagInput
+        label="Spécialités"
+        icon={<Star size={16} color="#1a73e8" />}
+        tags={form.specialties}
+        onChange={(specialties) => setForm({ ...form, specialties })}
+        placeholder="Tapez une spécialité et appuyez sur Entrée"
+        suggestions={['Randonnée', 'Culture', 'Gastronomie', 'Histoire', 'Aventure', 'Photo', 'Nature', 'Architecture']}
+      />
+
+      {/* Langues */}
+      <TagInput
+        label="Langues parlées"
+        icon={<Globe size={16} color="#1a73e8" />}
+        tags={form.languages}
+        onChange={(languages) => setForm({ ...form, languages })}
+        placeholder="Tapez une langue et appuyez sur Entrée"
+        suggestions={COMMON_LANGUAGES}
+      />
+
+      <button
+        type="submit"
+        disabled={isPending}
+        className="self-end flex items-center gap-2 px-6 py-2.5 bg-[#1a73e8] text-white rounded-xl text-sm font-semibold hover:bg-blue-600 transition-colors disabled:opacity-60"
+      >
+        <Save size={15} />
+        {isPending ? 'Enregistrement...' : isEdit ? 'Mettre à jour' : 'Créer mon profil'}
+      </button>
+    </form>
+  );
+}

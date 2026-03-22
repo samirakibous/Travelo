@@ -5,12 +5,16 @@ node_modules
 .pnp
 .pnp.js
 
-# Local env files
+# Local env files — never commit secrets
 .env
 .env.local
+.env.development
+.env.test
+.env.production
 .env.development.local
 .env.test.local
 .env.production.local
+# .env.example files ARE committed (no secrets, just templates)
 
 # Testing
 coverage
@@ -36,3 +40,7 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Uploads (fichiers générés, ne pas committer)
+apps/api/uploads/**
+!apps/api/uploads/**/.gitkeep
