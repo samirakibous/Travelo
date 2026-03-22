@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { UserCircle } from 'lucide-react';
+import { UserCircle, Lightbulb } from 'lucide-react';
 import { logout } from '../../../lib/auth';
 import { getUser } from '../../../lib/getUser';
 
@@ -50,6 +50,20 @@ export default async function DashboardPage() {
             </div>
           </Link>
 
+          {user.role === 'guide' && (
+            <Link
+              href="/dashboard/advice"
+              className="flex items-center gap-4 bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow"
+            >
+              <div className="w-10 h-10 rounded-xl bg-[#e8f0fe] flex items-center justify-center shrink-0">
+                <Lightbulb size={20} color="#1a73e8" />
+              </div>
+              <div>
+                <p className="font-semibold text-[#1a1a2e] text-sm">Mes conseils</p>
+                <p className="text-xs text-gray-500 mt-0.5">Publier des conseils de sécurité géolocalisés</p>
+              </div>
+            </Link>
+          )}
         </div>
       </div>
     </div>
