@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { UserCircle, Lightbulb } from 'lucide-react';
+import { UserCircle, Lightbulb, ShieldAlert } from 'lucide-react';
 import { logout } from '../../../lib/auth';
 import { getUser } from '../../../lib/getUser';
 
@@ -61,6 +61,21 @@ export default async function DashboardPage() {
               <div>
                 <p className="font-semibold text-[#1a1a2e] text-sm">Mes conseils</p>
                 <p className="text-xs text-gray-500 mt-0.5">Publier des conseils de sécurité géolocalisés</p>
+              </div>
+            </Link>
+          )}
+
+          {user.role === 'admin' && (
+            <Link
+              href="/admin"
+              className="flex items-center gap-4 bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow"
+            >
+              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+                <ShieldAlert size={20} color="#dc2626" />
+              </div>
+              <div>
+                <p className="font-semibold text-[#1a1a2e] text-sm">Administration</p>
+                <p className="text-xs text-gray-500 mt-0.5">Modération et gestion de la plateforme</p>
               </div>
             </Link>
           )}

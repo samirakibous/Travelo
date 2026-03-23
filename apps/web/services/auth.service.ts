@@ -2,8 +2,8 @@ import { api } from './api';
 import { getAuthApi } from './api.server';
 
 export type RegisterPayload = {
-  firstName: string;
-  lastName: string;
+  firstName: string |undefined;
+  lastName: string |undefined;
   email: string;
   password: string;
   role?: string;
