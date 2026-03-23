@@ -5,8 +5,10 @@ import {
   Users, FileText, Lightbulb, ShieldAlert,
   Trash2, UserCheck, UserX, ChevronDown, Search,
   BarChart3, AlertTriangle, ChevronLeft, ChevronRight,
-  Tag, Plus, Pencil, X, Check,
+  Tag, Plus, Pencil, X, Check, LogOut,
 } from 'lucide-react';
+import { useAuth } from '../../../contexts/AuthContext';
+import { logout } from '../../../lib/auth';
 import { adminCreateCategory, adminUpdateCategory, adminDeleteCategory } from '../../../lib/category';
 import type { Category } from '../../../types/category';
 import {
@@ -312,49 +314,93 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
     });
   };
 
+  const { user } = useAuth();
+
   const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: 'overview',   label: "Vue d'ensemble", icon: <BarChart3 size={15} /> },
-    { key: 'users',      label: 'Utilisateurs',   icon: <Users size={15} /> },
-    { key: 'posts',      label: 'Publications',    icon: <FileText size={15} /> },
-    { key: 'advices',    label: 'Conseils',        icon: <Lightbulb size={15} /> },
-    { key: 'categories', label: 'Catégories',      icon: <Tag size={15} /> },
+    { key: 'overview',   label: "Vue d'ensemble", icon: <BarChart3 size={16} /> },
+    { key: 'users',      label: 'Utilisateurs',   icon: <Users size={16} /> },
+    { key: 'posts',      label: 'Publications',    icon: <FileText size={16} /> },
+    { key: 'advices',    label: 'Conseils',        icon: <Lightbulb size={16} /> },
+    { key: 'categories', label: 'Catégories',      icon: <Tag size={16} /> },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 flex">
 
-      {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-8 py-5 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center">
-          <ShieldAlert size={18} className="text-red-600" />
-        </div>
-        <div>
-          <h1 className="text-lg font-extrabold text-[#1a1a2e]">Administration</h1>
-          <p className="text-xs text-gray-400">Modération et gestion de la plateforme</p>
-        </div>
-      </div>
+      {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
+      <aside className="fixed inset-y-0 left-0 w-56 bg-white border-r border-gray-100 flex flex-col z-20">
 
-      {/* Tabs */}
-      <div className="bg-white border-b border-gray-100 px-8">
-        <div className="flex gap-1">
+        {/* Logo */}
+        <div className="px-5 py-5 border-b border-gray-100 flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+            <ShieldAlert size={16} className="text-red-600" />
+          </div>
+          <div>
+            <p className="text-sm font-extrabold text-[#1a1a2e] leading-none">Travelo</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">Administration</p>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
           {TABS.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium w-full text-left transition-colors ${
                 tab === t.key
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
               }`}
             >
-              {t.icon}
+              <span className={tab === t.key ? 'text-blue-600' : 'text-gray-400'}>{t.icon}</span>
               {t.label}
             </button>
           ))}
-        </div>
-      </div>
+        </nav>
 
-      <div className="p-8 max-w-6xl mx-auto">
+        {/* User + logout */}
+        {user && (
+          <div className="px-4 py-4 border-t border-gray-100">
+            <div className="flex items-center gap-2.5 mb-3">
+              {user.profilePicture ? (
+                <img
+                  src={`http://localhost:3000${user.profilePicture}`}
+                  alt=""
+                  className="w-8 h-8 rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center shrink-0 text-xs font-bold text-red-600">
+                  {user.firstName?.[0]}{user.lastName?.[0]}
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-[#1a1a2e] truncate">{user.firstName} {user.lastName}</p>
+                <p className="text-[10px] text-gray-400 truncate">{user.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => logout()}
+              className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
+            >
+              <LogOut size={13} />
+              Déconnexion
+            </button>
+          </div>
+        )}
+      </aside>
+
+      {/* ── Main content ────────────────────────────────────────────────────── */}
+      <div className="ml-56 flex-1 flex flex-col min-h-screen">
+
+        {/* Top bar */}
+        <div className="bg-white border-b border-gray-100 px-8 py-4">
+          <h1 className="text-base font-bold text-[#1a1a2e]">
+            {TABS.find((t) => t.key === tab)?.label}
+          </h1>
+        </div>
+
+      <div className="p-8 max-w-6xl mx-auto w-full">
 
         {/* TAB: Overview */}
         {tab === 'overview' && stats && (
@@ -649,6 +695,7 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

@@ -45,7 +45,7 @@ export default function LoginPage() {
     const result = await login(values.email, values.password);
 
     if (result.success) {
-      router.push('/dashboard');
+      router.push(result.user?.role === 'admin' ? '/admin' : '/dashboard');
       router.refresh();
     } else {
       setServerError(result.error);

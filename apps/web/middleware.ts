@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const publicRoutes = ['/login', '/register'];
-const protectedRoutes = ['/dashboard', '/profile'];
+const protectedRoutes = ['/dashboard', '/profile', '/admin'];
 
-function decodeJwtPayload(token: string): { sub: string; exp: number } | null {
+function decodeJwtPayload(token: string): { sub: string; exp: number; role?: string } | null {
   try {
     const base64Url = token.split('.')[1];
     if (!base64Url) return null;
@@ -73,12 +73,19 @@ export async function middleware(request: NextRequest) {
   const isPublic = publicRoutes.includes(pathname);
   const isProtected = protectedRoutes.some((r) => pathname.startsWith(r));
 
+  const addPathname = (res: NextResponse) => {
+    res.headers.set('x-pathname', pathname);
+    return res;
+  };
+
   // Token valide → logique normale
   if (accessToken && !isTokenExpired(accessToken)) {
     if (isPublic) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      const role = decodeJwtPayload(accessToken)?.role;
+      const dest = role === 'admin' ? '/admin' : '/dashboard';
+      return addPathname(NextResponse.redirect(new URL(dest, request.url)));
     }
-    return NextResponse.next();
+    return addPathname(NextResponse.next());
   }
 
   // Token expiré ou absent → tenter un refresh
@@ -86,13 +93,15 @@ export async function middleware(request: NextRequest) {
 
   if (newTokens) {
     if (isPublic) {
-      return applyTokenCookies(
-        NextResponse.redirect(new URL('/dashboard', request.url)),
+      const role = decodeJwtPayload(newTokens.accessToken)?.role;
+      const dest = role === 'admin' ? '/admin' : '/dashboard';
+      return addPathname(applyTokenCookies(
+        NextResponse.redirect(new URL(dest, request.url)),
         newTokens.accessToken,
         newTokens.refreshToken,
-      );
+      ));
     }
-    return applyTokenCookies(NextResponse.next(), newTokens.accessToken, newTokens.refreshToken);
+    return addPathname(applyTokenCookies(NextResponse.next(), newTokens.accessToken, newTokens.refreshToken));
   }
 
   // Aucun token valide
@@ -103,7 +112,7 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  return NextResponse.next();
+  return addPathname(NextResponse.next());
 }
 
 export const config = {
