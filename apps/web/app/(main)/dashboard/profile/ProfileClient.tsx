@@ -7,6 +7,7 @@ import { updateProfile, changePassword, uploadAvatar } from '../../../../lib/use
 import GuideProfileForm from '../guide-profile/GuideProfileForm';
 import type { User as UserType } from '../../../../types/auth';
 import type { GuideProfile } from '../../../../types/guide';
+import type { Specialty } from '../../../../types/specialty';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:3000';
 
@@ -23,7 +24,7 @@ function Alert({ type, message }: { type: 'success' | 'error'; message: string }
   );
 }
 
-export default function ProfileClient({ initialUser, guideProfile }: { initialUser: UserType; guideProfile: GuideProfile | null }) {
+export default function ProfileClient({ initialUser, guideProfile, availableSpecialties }: { initialUser: UserType; guideProfile: GuideProfile | null; availableSpecialties: Specialty[] }) {
   const { user, setUser } = useAuth();
   const currentUser = user ?? initialUser;
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -196,7 +197,7 @@ export default function ProfileClient({ initialUser, guideProfile }: { initialUs
             <User size={16} color="#1a73e8" />
             <h2 className="font-bold text-[#1a1a2e]">Profil guide</h2>
           </div>
-          <GuideProfileForm existing={guideProfile} />
+          <GuideProfileForm existing={guideProfile} availableSpecialties={availableSpecialties} />
         </div>
       )}
 
