@@ -18,8 +18,8 @@ export class GuideProfile {
   @Prop({ type: Number, default: 0, min: 0 })
   hourlyRate!: number;
 
-  @Prop({ type: [String], default: [] })
-  specialties!: string[];
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Specialty' }], default: [] })
+  specialties!: Types.ObjectId[];
 
   @Prop({ type: [String], default: [] })
   languages!: string[];

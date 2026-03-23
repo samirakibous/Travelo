@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { GuideProfile, GuideProfileDocument } from './entities/guide-profile.entity';
 import { CreateGuideProfileDto } from './dto/create-guide-profile.dto';
 import { QueryGuideDto } from './dto/query-guide.dto';
@@ -32,7 +32,7 @@ export class GuideService {
       filter.expertiseLevel = query.expertiseLevel;
     }
     if (query.specialty) {
-      filter.specialties = { $in: [new RegExp(query.specialty, 'i')] };
+      filter.specialties = new Types.ObjectId(query.specialty);
     }
     if (query.language) {
       filter.languages = { $in: [new RegExp(query.language, 'i')] };
@@ -47,6 +47,7 @@ export class GuideService {
       this.guideModel
         .find(filter)
         .populate('userId', 'firstName lastName profilePicture email')
+        .populate('specialties')
         .sort({ rating: -1 })
         .skip(skip)
         .limit(limit)
@@ -60,7 +61,8 @@ export class GuideService {
   async findOne(id: string) {
     const guide = await this.guideModel
       .findById(id)
-      .populate('userId', 'firstName lastName profilePicture email');
+      .populate('userId', 'firstName lastName profilePicture email')
+      .populate('specialties');
     if (!guide) throw new NotFoundException('Guide introuvable');
     return guide;
   }
@@ -74,13 +76,14 @@ export class GuideService {
 
     const profile = new this.guideModel({ ...dto, userId });
     await profile.save();
-    return profile.populate('userId', 'firstName lastName profilePicture email');
+    return profile.populate(['userId', 'specialties']);
   }
 
   async updateProfile(userId: string, dto: Partial<CreateGuideProfileDto>) {
     const profile = await this.guideModel
       .findOneAndUpdate({ userId }, dto, { new: true })
-      .populate('userId', 'firstName lastName profilePicture email');
+      .populate('userId', 'firstName lastName profilePicture email')
+      .populate('specialties');
     if (!profile) throw new NotFoundException('Profil guide introuvable');
     return profile;
   }
@@ -88,7 +91,8 @@ export class GuideService {
   async getMyProfile(userId: string) {
     const profile = await this.guideModel
       .findOne({ userId })
-      .populate('userId', 'firstName lastName profilePicture email');
+      .populate('userId', 'firstName lastName profilePicture email')
+      .populate('specialties');
     if (!profile) throw new NotFoundException('Profil guide introuvable');
     return profile;
   }

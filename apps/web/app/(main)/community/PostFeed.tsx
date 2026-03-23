@@ -127,11 +127,11 @@ export default function PostFeed({ initialPosts, initialTotal, categories }: Pro
           {categories.map((c) => (
             <button
               key={c._id}
-              onClick={() => handleCategory(c.slug)}
+              onClick={() => handleCategory(c._id)}
               className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                category === c.slug ? 'text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                category === c._id ? 'text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
-              style={category === c.slug ? { background: c.color } : {}}
+              style={category === c._id ? { background: c.color } : {}}
             >
               {c.name}
             </button>

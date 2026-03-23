@@ -6,13 +6,15 @@ import { apiGetGuides } from '../../../services/guide.service';
 import FilterSidebar from './FilterSidebar';
 import GuideCard from './GuideCard';
 import type { GuideProfile, GuideQuery } from '../../../types/guide';
+import type { Specialty } from '../../../types/specialty';
 
 type Props = {
   initialGuides: GuideProfile[];
   initialTotal: number;
+  specialties: Specialty[];
 };
 
-export default function GuidesClient({ initialGuides, initialTotal }: Props) {
+export default function GuidesClient({ initialGuides, initialTotal, specialties }: Props) {
   const [guides, setGuides] = useState(initialGuides);
   const [total, setTotal] = useState(initialTotal);
   const [filters, setFilters] = useState<GuideQuery>({ page: 1, limit: 12 });
@@ -41,7 +43,7 @@ export default function GuidesClient({ initialGuides, initialTotal }: Props) {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 flex gap-8">
-      <FilterSidebar filters={filters} onChange={applyFilters} />
+      <FilterSidebar filters={filters} onChange={applyFilters} specialties={specialties} />
 
       <div className="flex-1 min-w-0">
         {/* Header */}

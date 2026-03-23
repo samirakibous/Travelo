@@ -1,15 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
-export type CategoryDocument = HydratedDocument<Category>;
+export type SpecialtyDocument = HydratedDocument<Specialty>;
 
 @Schema({ timestamps: true })
-export class Category {
+export class Specialty {
   @Prop({ required: true, unique: true, trim: true })
   name!: string;
-
-  @Prop({ default: '#6b7280' })
-  color!: string;
 }
 
-export const CategorySchema = SchemaFactory.createForClass(Category);
+export const SpecialtySchema = SchemaFactory.createForClass(Specialty);

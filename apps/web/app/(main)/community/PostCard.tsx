@@ -8,7 +8,6 @@ import { useAuth } from '../../../contexts/AuthContext';
 import type { Post } from '../../../types/post';
 import type { Category } from '../../../types/category';
 
-
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const minutes = Math.floor(diff / 60000);
@@ -71,7 +70,7 @@ export default function PostCard({ post, onDeleted, categories }: Props) {
     if (result.success) setReported(true);
   };
 
-  const categoryColor = categories.find((c) => c.slug === post.category)?.color ?? '#6b7280';
+  const categoryColor = post.category?.color ?? '#6b7280';
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
@@ -92,7 +91,7 @@ export default function PostCard({ post, onDeleted, categories }: Props) {
           className="text-xs font-semibold px-2.5 py-1 rounded-full"
           style={{ backgroundColor: `${categoryColor}18`, color: categoryColor }}
         >
-          {post.category}
+          {post.category?.name}
         </span>
       </div>
 

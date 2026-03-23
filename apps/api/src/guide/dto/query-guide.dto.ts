@@ -1,4 +1,4 @@
-import { IsEnum, IsNumberString, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsMongoId, IsNumberString, IsOptional, IsString } from 'class-validator';
 import { ExpertiseLevel } from '../enums/expertise-level.enum';
 
 export class QueryGuideDto {
@@ -11,7 +11,7 @@ export class QueryGuideDto {
   expertiseLevel?: ExpertiseLevel;
 
   @IsOptional()
-  @IsString()
+  @IsMongoId()
   specialty?: string;
 
   @IsOptional()

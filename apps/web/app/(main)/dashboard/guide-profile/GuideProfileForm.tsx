@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Save, Plus, X, MapPin, DollarSign, BookOpen, Globe, Star, AlertCircle, CheckCircle } from 'lucide-react';
+import { Save, X, MapPin, DollarSign, BookOpen, Globe, Star, AlertCircle, CheckCircle } from 'lucide-react';
 import { createGuideProfile, updateGuideProfile } from '../../../../lib/guide';
 import type { GuideProfilePayload } from '../../../../lib/guide';
 import type { GuideProfile } from '../../../../types/guide';
+import type { Specialty } from '../../../../types/specialty';
 
 const EXPERTISE_OPTIONS = [
   { value: 'elite', label: 'Elite', description: 'Guide expert internationalement reconnu' },
@@ -95,10 +96,9 @@ function TagInput({
                 key={s}
                 type="button"
                 onClick={() => addTag(s)}
-                className="px-2.5 py-1 rounded-lg border border-gray-200 text-xs text-gray-500 hover:border-[#1a73e8] hover:text-[#1a73e8] transition-colors flex items-center gap-1"
+                className="px-2.5 py-1 rounded-lg border border-gray-200 text-xs text-gray-500 hover:border-[#1a73e8] hover:text-[#1a73e8] transition-colors"
               >
-                <Plus size={10} />
-                {s}
+                + {s}
               </button>
             ))}
         </div>
@@ -107,14 +107,20 @@ function TagInput({
   );
 }
 
-export default function GuideProfileForm({ existing }: { existing: GuideProfile | null }) {
+export default function GuideProfileForm({
+  existing,
+  availableSpecialties,
+}: {
+  existing: GuideProfile | null;
+  availableSpecialties: Specialty[];
+}) {
   const isEdit = existing !== null;
 
   const [form, setForm] = useState<GuideProfilePayload>({
     bio: existing?.bio ?? '',
     location: existing?.location ?? '',
     hourlyRate: existing?.hourlyRate ?? 50,
-    specialties: existing?.specialties ?? [],
+    specialties: existing?.specialties.map((s) => s._id) ?? [],
     languages: existing?.languages ?? [],
     expertiseLevel: existing?.expertiseLevel ?? 'local',
   });
@@ -216,14 +222,38 @@ export default function GuideProfileForm({ existing }: { existing: GuideProfile 
       </div>
 
       {/* Spécialités */}
-      <TagInput
-        label="Spécialités"
-        icon={<Star size={16} color="#1a73e8" />}
-        tags={form.specialties}
-        onChange={(specialties) => setForm({ ...form, specialties })}
-        placeholder="Tapez une spécialité et appuyez sur Entrée"
-        suggestions={['Randonnée', 'Culture', 'Gastronomie', 'Histoire', 'Aventure', 'Photo', 'Nature', 'Architecture']}
-      />
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
+          <Star size={16} color="#1a73e8" />
+          <label className="text-sm font-medium text-[#1a1a2e]">Spécialités</label>
+        </div>
+        <div className="flex flex-wrap gap-2 p-3 rounded-xl border border-gray-200 min-h-[46px]">
+          {availableSpecialties.map((s) => {
+            const selected = form.specialties.includes(s._id);
+            return (
+              <button
+                key={s._id}
+                type="button"
+                onClick={() =>
+                  setForm({
+                    ...form,
+                    specialties: selected
+                      ? form.specialties.filter((id) => id !== s._id)
+                      : [...form.specialties, s._id],
+                  })
+                }
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  selected
+                    ? 'bg-[#e8f0fe] text-[#1a73e8]'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+              >
+                {s.name}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Langues */}
       <TagInput

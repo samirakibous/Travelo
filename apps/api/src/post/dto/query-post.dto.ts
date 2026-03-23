@@ -1,4 +1,4 @@
-import { IsIn, IsNumberString, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsMongoId, IsNumberString, IsOptional, IsString } from 'class-validator';
 
 export class QueryPostDto {
   @IsOptional()
@@ -6,7 +6,7 @@ export class QueryPostDto {
   destination?: string;
 
   @IsOptional()
-  @IsString()
+  @IsMongoId()
   category?: string;
 
   @IsOptional()

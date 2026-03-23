@@ -5,12 +5,14 @@ import {
   Users, FileText, Lightbulb, ShieldAlert,
   Trash2, UserCheck, UserX, ChevronDown, Search,
   BarChart3, AlertTriangle, ChevronLeft, ChevronRight,
-  Tag, Plus, Pencil, X, Check, LogOut,
+  Tag, Plus, Pencil, X, Check, LogOut, Star,
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { logout } from '../../../lib/auth';
 import { adminCreateCategory, adminUpdateCategory, adminDeleteCategory } from '../../../lib/category';
 import type { Category } from '../../../types/category';
+import { adminCreateSpecialty, adminUpdateSpecialty, adminDeleteSpecialty } from '../../../lib/specialty';
+import type { Specialty } from '../../../types/specialty';
 import {
   adminUpdateRole, adminToggleActive, adminDeleteUser,
   adminDeletePost, adminDeleteAdvice,
@@ -18,7 +20,7 @@ import {
 } from '../../../lib/admin';
 import type { AdminStats, AdminUser, AdminPost, AdminAdvice, AdminPagedResponse } from '../../../types/admin';
 
-type Tab = 'overview' | 'users' | 'posts' | 'advices' | 'categories';
+type Tab = 'overview' | 'users' | 'posts' | 'advices' | 'categories' | 'specialties';
 
 const LIMIT = 5;
 
@@ -182,9 +184,10 @@ type Props = {
   initialPosts: AdminPagedResponse<AdminPost>;
   initialAdvices: AdminPagedResponse<AdminAdvice>;
   initialCategories: Category[];
+  initialSpecialties: Specialty[];
 };
 
-export default function AdminClient({ initialStats, initialUsers, initialPosts, initialAdvices, initialCategories }: Props) {
+export default function AdminClient({ initialStats, initialUsers, initialPosts, initialAdvices, initialCategories, initialSpecialties }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
   const [stats] = useState(initialStats);
 
@@ -209,6 +212,12 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
   const [editingCat, setEditingCat]         = useState<Category | null>(null);
   const [catError, setCatError]             = useState('');
   const [isPendingCat, startCat]            = useTransition();
+
+  const [specialties, setSpecialties]       = useState<Specialty[]>(initialSpecialties);
+  const [specForm, setSpecForm]             = useState({ name: '' });
+  const [editingSpec, setEditingSpec]       = useState<Specialty | null>(null);
+  const [specError, setSpecError]           = useState('');
+  const [isPendingSpec, startSpec]          = useTransition();
 
   const loadUsers = (page: number, search: string) => {
     startUsers(async () => {
@@ -314,6 +323,39 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
     });
   };
 
+  const handleCreateSpecialty = () => {
+    if (!specForm.name.trim()) { setSpecError('Le nom est requis'); return; }
+    setSpecError('');
+    startSpec(async () => {
+      const res = await adminCreateSpecialty(specForm);
+      if (res.success) {
+        setSpecialties((prev) => [...prev, res.data]);
+        setSpecForm({ name: '' });
+      } else {
+        setSpecError(res.error);
+      }
+    });
+  };
+
+  const handleUpdateSpecialty = () => {
+    if (!editingSpec) return;
+    startSpec(async () => {
+      const res = await adminUpdateSpecialty(editingSpec._id, { name: editingSpec.name });
+      if (res.success) {
+        setSpecialties((prev) => prev.map((s) => (s._id === res.data._id ? res.data : s)));
+        setEditingSpec(null);
+      }
+    });
+  };
+
+  const handleDeleteSpecialty = (id: string) => {
+    if (!confirm('Supprimer cette spécialité ?')) return;
+    startSpec(async () => {
+      const res = await adminDeleteSpecialty(id);
+      if (res.success) setSpecialties((prev) => prev.filter((s) => s._id !== id));
+    });
+  };
+
   const { user } = useAuth();
 
   const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
@@ -321,7 +363,8 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
     { key: 'users',      label: 'Utilisateurs',   icon: <Users size={16} /> },
     { key: 'posts',      label: 'Publications',    icon: <FileText size={16} /> },
     { key: 'advices',    label: 'Conseils',        icon: <Lightbulb size={16} /> },
-    { key: 'categories', label: 'Catégories',      icon: <Tag size={16} /> },
+    { key: 'categories',  label: 'Catégories',   icon: <Tag size={16} /> },
+    { key: 'specialties', label: 'Spécialités',  icon: <Star size={16} /> },
   ];
 
   return (
@@ -678,7 +721,7 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
                     <>
                       <span className="w-4 h-4 rounded-full shrink-0" style={{ background: cat.color }} />
                       <span className="flex-1 text-sm font-medium text-[#1a1a2e]">{cat.name}</span>
-                      <span className="text-xs text-gray-400 font-mono">{cat.slug}</span>
+                      <span className="text-xs text-gray-400 font-mono">{cat._id}</span>
                       <button onClick={() => setEditingCat(cat)} className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors">
                         <Pencil size={13} className="text-gray-500" />
                       </button>
@@ -691,6 +734,75 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
               ))}
               {categories.length === 0 && (
                 <p className="text-center py-8 text-sm text-gray-400">Aucune catégorie</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB: Specialties */}
+        {tab === 'specialties' && (
+          <div className="flex flex-col gap-6">
+
+            {/* Create form */}
+            <div className="bg-white rounded-2xl shadow-sm p-5">
+              <p className="text-sm font-semibold text-[#1a1a2e] mb-4">Nouvelle spécialité</p>
+              {specError && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg mb-3">{specError}</p>}
+              <div className="flex items-end gap-3">
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-gray-500">Nom</label>
+                  <input
+                    type="text"
+                    value={specForm.name}
+                    onChange={(e) => setSpecForm({ name: e.target.value })}
+                    placeholder="Ex : Gastronomie"
+                    className="px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <button
+                  onClick={handleCreateSpecialty}
+                  disabled={isPendingSpec}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  <Plus size={15} />
+                  Ajouter
+                </button>
+              </div>
+            </div>
+
+            {/* List */}
+            <div className={`bg-white rounded-2xl shadow-sm overflow-hidden ${isPendingSpec ? 'opacity-50' : ''}`}>
+              {specialties.map((spec) => (
+                <div key={spec._id} className="flex items-center gap-4 px-5 py-3.5 border-b border-gray-50 last:border-0">
+                  {editingSpec?._id === spec._id ? (
+                    <>
+                      <input
+                        type="text"
+                        value={editingSpec.name}
+                        onChange={(e) => setEditingSpec({ ...editingSpec, name: e.target.value })}
+                        className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-blue-500"
+                      />
+                      <button onClick={handleUpdateSpecialty} className="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center hover:bg-green-100 transition-colors">
+                        <Check size={13} className="text-green-600" />
+                      </button>
+                      <button onClick={() => setEditingSpec(null)} className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                        <X size={13} className="text-gray-500" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="flex-1 text-sm font-medium text-[#1a1a2e]">{spec.name}</span>
+                      <button onClick={() => setEditingSpec(spec)} className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                        <Pencil size={13} className="text-gray-500" />
+                      </button>
+                      <button onClick={() => handleDeleteSpecialty(spec._id)} className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center hover:bg-red-100 transition-colors">
+                        <Trash2 size={13} className="text-red-600" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))}
+              {specialties.length === 0 && (
+                <p className="text-center py-8 text-sm text-gray-400">Aucune spécialité</p>
               )}
             </div>
           </div>
