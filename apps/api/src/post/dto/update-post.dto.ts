@@ -1,5 +1,4 @@
-import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
-import { PostCategory } from '../enums/post-category.enum';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdatePostDto {
   @IsOptional()
@@ -17,6 +16,6 @@ export class UpdatePostDto {
   destination?: string;
 
   @IsOptional()
-  @IsEnum(PostCategory)
-  category?: PostCategory;
+  @IsString()
+  category?: string;
 }

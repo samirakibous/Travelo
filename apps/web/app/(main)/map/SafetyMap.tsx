@@ -68,7 +68,11 @@ function GeolocationController() {
   const map = useMap();
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
-      ({ coords }) => map.setView([coords.latitude, coords.longitude], 13),
+      ({ coords }) => {
+        map.whenReady(() => {
+          map.setView([coords.latitude, coords.longitude], 13);
+        });
+      },
       () => {},
     );
   }, [map]);

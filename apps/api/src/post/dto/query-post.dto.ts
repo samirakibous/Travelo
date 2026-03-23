@@ -1,5 +1,4 @@
-import { IsEnum, IsIn, IsNumberString, IsOptional, IsString } from 'class-validator';
-import { PostCategory } from '../enums/post-category.enum';
+import { IsIn, IsNumberString, IsOptional, IsString } from 'class-validator';
 
 export class QueryPostDto {
   @IsOptional()
@@ -7,8 +6,8 @@ export class QueryPostDto {
   destination?: string;
 
   @IsOptional()
-  @IsEnum(PostCategory)
-  category?: PostCategory;
+  @IsString()
+  category?: string;
 
   @IsOptional()
   @IsIn(['recent', 'popular'])
