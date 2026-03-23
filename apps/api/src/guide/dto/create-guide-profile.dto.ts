@@ -2,6 +2,7 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsEnum,
+  IsMongoId,
   IsNotEmpty,
   IsNumber,
   IsString,
@@ -26,7 +27,7 @@ export class CreateGuideProfileDto {
 
   @IsArray()
   @ArrayNotEmpty()
-  @IsString({ each: true })
+  @IsMongoId({ each: true })
   specialties!: string[];
 
   @IsArray()

@@ -1,14 +1,16 @@
 import { adminGetStats, adminGetUsers, adminGetPosts, adminGetAdvices } from '../../../lib/admin';
 import { apiGetCategories } from '../../../services/category.service';
+import { apiGetSpecialties } from '../../../services/specialty.service';
 import AdminClient from './AdminClient';
 
 export default async function AdminPage() {
-  const [stats, users, posts, advices, categories] = await Promise.all([
+  const [stats, users, posts, advices, categories, specialties] = await Promise.all([
     adminGetStats(),
     adminGetUsers({ page: 1, limit: 5 }),
     adminGetPosts({ page: 1, limit: 5 }),
     adminGetAdvices({ page: 1, limit: 5 }),
     apiGetCategories(),
+    apiGetSpecialties(),
   ]);
 
   return (
@@ -18,6 +20,7 @@ export default async function AdminPage() {
       initialPosts={posts}
       initialAdvices={advices}
       initialCategories={categories}
+      initialSpecialties={specialties}
     />
   );
 }

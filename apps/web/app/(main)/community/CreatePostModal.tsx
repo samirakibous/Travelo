@@ -15,7 +15,7 @@ type Props = {
 
 export default function CreatePostModal({ onClose, onCreated, editPost, categories }: Props) {
   const isEditing = !!editPost;
-  const defaultCategory = editPost?.category ?? categories[0]?.slug ?? '';
+  const defaultCategory = editPost?.category._id ?? categories[0]?._id ?? '';
   const [form, setForm] = useState({
     title: editPost?.title ?? '',
     description: editPost?.description ?? '',
@@ -117,7 +117,7 @@ export default function CreatePostModal({ onClose, onCreated, editPost, categori
                 className="px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1a73e8] transition-colors bg-white capitalize"
               >
                 {categories.map((c) => (
-                  <option key={c._id} value={c.slug}>{c.name}</option>
+                  <option key={c._id} value={c._id}>{c.name}</option>
                 ))}
               </select>
             </div>

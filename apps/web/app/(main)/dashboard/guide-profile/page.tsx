@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { Users } from 'lucide-react';
 import { getUser } from '../../../../lib/getUser';
 import { getMyGuideProfile } from '../../../../lib/guide';
+import { apiGetSpecialties } from '../../../../services/specialty.service';
 import GuideProfileForm from './GuideProfileForm';
 
 export default async function GuideProfilePage() {
@@ -9,7 +10,10 @@ export default async function GuideProfilePage() {
   if (!user) redirect('/login');
   if (user.role !== 'guide') redirect('/dashboard');
 
-  const existing = await getMyGuideProfile();
+  const [existing, availableSpecialties] = await Promise.all([
+    getMyGuideProfile(),
+    apiGetSpecialties(),
+  ]);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 flex flex-col gap-6">
@@ -37,7 +41,7 @@ export default async function GuideProfilePage() {
       )}
 
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <GuideProfileForm existing={existing} />
+        <GuideProfileForm existing={existing} availableSpecialties={availableSpecialties} />
       </div>
     </div>
   );

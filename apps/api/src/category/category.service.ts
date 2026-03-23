@@ -1,21 +1,23 @@
-import { Injectable, ConflictException, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException, OnApplicationBootstrap } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Category, CategoryDocument } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
+import { Post, PostDocument } from '../post/entities/post.entity';
 
 const SEED_CATEGORIES = [
-  { name: 'Sécurité',  slug: 'sécurité',  color: '#dc2626' },
-  { name: 'Transport', slug: 'transport', color: '#2563eb' },
-  { name: 'Arnaque',   slug: 'arnaque',   color: '#ea580c' },
-  { name: 'Culture',   slug: 'culture',   color: '#9333ea' },
-  { name: 'Incident',  slug: 'incident',  color: '#6b7280' },
+  { name: 'Sécurité',  color: '#dc2626' },
+  { name: 'Transport', color: '#2563eb' },
+  { name: 'Arnaque',   color: '#ea580c' },
+  { name: 'Culture',   color: '#9333ea' },
+  { name: 'Incident',  color: '#6b7280' },
 ];
 
 @Injectable()
 export class CategoryService implements OnApplicationBootstrap {
   constructor(
     @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
+    @InjectModel(Post.name) private postModel: Model<PostDocument>,
   ) {}
 
   async onApplicationBootstrap() {
@@ -25,32 +27,19 @@ export class CategoryService implements OnApplicationBootstrap {
     }
   }
 
-  private toSlug(name: string): string {
-    return name
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9-]/g, '');
-  }
-
   findAll() {
     return this.categoryModel.find().sort({ name: 1 }).lean();
   }
 
   async create(dto: CreateCategoryDto) {
-    const slug = this.toSlug(dto.name);
-    const exists = await this.categoryModel.findOne({ slug });
+    const exists = await this.categoryModel.findOne({ name: { $regex: `^${dto.name}$`, $options: 'i' } });
     if (exists) throw new ConflictException('Une catégorie avec ce nom existe déjà');
-    return this.categoryModel.create({ name: dto.name, slug, color: dto.color ?? '#6b7280' });
+    return this.categoryModel.create({ name: dto.name, color: dto.color ?? '#6b7280' });
   }
 
   async update(id: string, dto: Partial<CreateCategoryDto>) {
     const update: Partial<Category> = {};
-    if (dto.name) {
-      update.name = dto.name;
-      update.slug = this.toSlug(dto.name);
-    }
+    if (dto.name) update.name = dto.name;
     if (dto.color) update.color = dto.color;
 
     const updated = await this.categoryModel.findByIdAndUpdate(id, update, { new: true });
@@ -59,8 +48,14 @@ export class CategoryService implements OnApplicationBootstrap {
   }
 
   async remove(id: string) {
-    const result = await this.categoryModel.findByIdAndDelete(id);
-    if (!result) throw new NotFoundException('Catégorie introuvable');
+    const category = await this.categoryModel.findById(id);
+    if (!category) throw new NotFoundException('Catégorie introuvable');
+
+    const postsCount = await this.postModel.countDocuments({ category: new Types.ObjectId(id) });
+    if (postsCount > 0)
+      throw new BadRequestException(`Impossible de supprimer : ${postsCount} post(s) utilisent cette catégorie`);
+
+    await this.categoryModel.findByIdAndDelete(id);
     return { success: true };
   }
 }

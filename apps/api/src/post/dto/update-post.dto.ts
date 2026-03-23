@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsMongoId, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdatePostDto {
   @IsOptional()
@@ -16,6 +16,6 @@ export class UpdatePostDto {
   destination?: string;
 
   @IsOptional()
-  @IsString()
+  @IsMongoId()
   category?: string;
 }

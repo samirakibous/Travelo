@@ -12,6 +12,7 @@ import { SafeZoneModule } from './safety-zone/safety-zone.module';
 import { AdviceModule } from './advice/advice.module';
 import { AdminModule } from './admin/admin.module';
 import { CategoryModule } from './category/category.module';
+import { SpecialtyModule } from './specialty/specialty.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { CategoryModule } from './category/category.module';
     AdviceModule,
     AdminModule,
     CategoryModule,
+    SpecialtyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

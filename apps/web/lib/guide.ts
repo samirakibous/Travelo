@@ -12,7 +12,7 @@ export type GuideProfilePayload = {
   bio: string;
   location: string;
   hourlyRate: number;
-  specialties: string[];
+  specialties: string[]; // array of Specialty ObjectIds
   languages: string[];
   expertiseLevel: 'elite' | 'professional' | 'local';
 };

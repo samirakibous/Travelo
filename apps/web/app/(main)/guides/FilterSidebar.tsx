@@ -2,6 +2,7 @@
 
 import { SlidersHorizontal } from 'lucide-react';
 import type { GuideQuery, ExpertiseLevel } from '../../../types/guide';
+import type { Specialty } from '../../../types/specialty';
 
 const EXPERTISE_OPTIONS = [
   { value: 'elite', label: 'Elite Guide (5+ ans)' },
@@ -9,19 +10,15 @@ const EXPERTISE_OPTIONS = [
   { value: 'local', label: 'Local Enthusiast' },
 ];
 
-const SPECIALTIES = ['Histoire', 'Culinaire', 'Sécurité nocturne', 'Randonnée', 'Photographie', 'Architecture', 'Art', 'Culture'];
 const LANGUAGES = ['Français', 'Anglais', 'Espagnol', 'Arabe', 'Allemand'];
 
 type Props = {
   filters: GuideQuery;
   onChange: (filters: GuideQuery) => void;
+  specialties: Specialty[];
 };
 
-export default function FilterSidebar({ filters, onChange }: Props) {
-  const toggle = <T extends string>(arr: T[] | undefined, value: T): T[] => {
-    const current = arr ?? [];
-    return current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
-  };
+export default function FilterSidebar({ filters, onChange, specialties }: Props) {
 
   return (
     <aside className="w-64 shrink-0 flex flex-col gap-6">
@@ -68,19 +65,19 @@ export default function FilterSidebar({ filters, onChange }: Props) {
       <div className="flex flex-col gap-2">
         <p className="text-sm font-semibold text-[#1a1a2e]">Spécialités</p>
         <div className="flex flex-wrap gap-2">
-          {SPECIALTIES.map((s) => {
-            const active = filters.specialty === s;
+          {specialties.map((s) => {
+            const active = filters.specialty === s._id;
             return (
               <button
-                key={s}
-                onClick={() => onChange({ ...filters, specialty: active ? undefined : s, page: 1 })}
+                key={s._id}
+                onClick={() => onChange({ ...filters, specialty: active ? undefined : s._id, page: 1 })}
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                   active
                     ? 'bg-[#1a73e8] text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {s}
+                {s.name}
               </button>
             );
           })}

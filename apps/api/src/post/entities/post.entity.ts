@@ -14,8 +14,8 @@ export class Post {
   @Prop({ required: true })
   destination!: string;
 
-  @Prop({ required: true })
-  category!: string;
+  @Prop({ type: Types.ObjectId, ref: 'Category', required: true })
+  category!: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   author!: Types.ObjectId;

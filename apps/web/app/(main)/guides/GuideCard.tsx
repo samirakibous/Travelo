@@ -64,10 +64,10 @@ export default function GuideCard({ guide }: Props) {
           <div className="flex flex-wrap gap-1.5">
             {specialties.slice(0, 3).map((s) => (
               <span
-                key={s}
+                key={s._id}
                 className="text-xs font-medium px-2.5 py-1 rounded-full border border-[#1a73e8] text-[#1a73e8] uppercase tracking-wide"
               >
-                {s}
+                {s.name}
               </span>
             ))}
           </div>

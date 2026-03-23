@@ -25,13 +25,14 @@ export class PostService {
       filter.destination = { $regex: query.destination, $options: 'i' };
     }
     if (query.category) {
-      filter.category = query.category;
+      filter.category = new Types.ObjectId(query.category);
     }
 
     const [data, total] = await Promise.all([
       this.postModel
         .find(filter)
         .populate('author', 'firstName lastName role')
+        .populate('category')
         .sort(query.sort === 'popular' ? {} : { createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -53,7 +54,7 @@ export class PostService {
       author: new Types.ObjectId(userId),
     });
     await post.save();
-    return post.populate('author', 'firstName lastName role');
+    return post.populate(['author', 'category']);
   }
 
   async update(postId: string, userId: string, updatePostDto: UpdatePostDto) {
@@ -66,7 +67,7 @@ export class PostService {
 
     Object.assign(post, updatePostDto);
     await post.save();
-    return post.populate('author', 'firstName lastName role');
+    return post.populate(['author', 'category']);
   }
 
   async remove(postId: string, userId: string, userRole: string) {

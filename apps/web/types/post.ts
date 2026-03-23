@@ -5,12 +5,14 @@ export type PostAuthor = {
   role: string;
 };
 
+import type { Category } from './category';
+
 export type Post = {
   _id: string;
   title: string;
   description: string;
   destination: string;
-  category: string;
+  category: Category;
   author: PostAuthor;
   upvotes: string[];
   downvotes: string[];

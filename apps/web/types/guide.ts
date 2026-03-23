@@ -1,3 +1,5 @@
+import type { Specialty } from './specialty';
+
 export type ExpertiseLevel = 'elite' | 'professional' | 'local';
 
 export type GuideProfile = {
@@ -12,7 +14,7 @@ export type GuideProfile = {
   bio: string;
   location: string;
   hourlyRate: number;
-  specialties: string[];
+  specialties: Specialty[];
   languages: string[];
   expertiseLevel: ExpertiseLevel;
   rating: number;
