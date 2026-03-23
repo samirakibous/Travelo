@@ -3,23 +3,24 @@
 import { useState } from 'react';
 import { X, MapPin } from 'lucide-react';
 import { createPost, updatePost } from '../../../lib/post';
-import type { Post, PostCategory } from '../../../types/post';
-
-const CATEGORIES: PostCategory[] = ['sécurité', 'transport', 'arnaque', 'culture', 'incident'];
+import type { Post } from '../../../types/post';
+import type { Category } from '../../../types/category';
 
 type Props = {
   onClose: () => void;
   onCreated: (post: Post) => void;
   editPost?: Post;
+  categories: Category[];
 };
 
-export default function CreatePostModal({ onClose, onCreated, editPost }: Props) {
+export default function CreatePostModal({ onClose, onCreated, editPost, categories }: Props) {
   const isEditing = !!editPost;
+  const defaultCategory = editPost?.category ?? categories[0]?.slug ?? '';
   const [form, setForm] = useState({
     title: editPost?.title ?? '',
     description: editPost?.description ?? '',
     destination: editPost?.destination ?? '',
-    category: (editPost?.category ?? 'sécurité') as PostCategory,
+    category: defaultCategory,
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -112,11 +113,11 @@ export default function CreatePostModal({ onClose, onCreated, editPost }: Props)
               <label className="text-sm font-medium text-[#1a1a2e]">Catégorie</label>
               <select
                 value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value as PostCategory })}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
                 className="px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1a73e8] transition-colors bg-white capitalize"
               >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                {categories.map((c) => (
+                  <option key={c._id} value={c.slug}>{c.name}</option>
                 ))}
               </select>
             </div>

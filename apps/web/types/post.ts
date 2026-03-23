@@ -1,5 +1,3 @@
-export type PostCategory = 'sécurité' | 'transport' | 'arnaque' | 'culture' | 'incident';
-
 export type PostAuthor = {
   _id: string;
   firstName: string;
@@ -12,7 +10,7 @@ export type Post = {
   title: string;
   description: string;
   destination: string;
-  category: PostCategory;
+  category: string;
   author: PostAuthor;
   upvotes: string[];
   downvotes: string[];
@@ -30,7 +28,7 @@ export type PostsResponse = {
 
 export type PostQuery = {
   destination?: string;
-  category?: PostCategory;
+  category?: string;
   sort?: 'recent' | 'popular';
   page?: number;
   limit?: number;

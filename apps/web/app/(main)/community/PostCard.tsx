@@ -6,14 +6,8 @@ import { votePost, deletePost, reportPost } from '../../../lib/post';
 import CreatePostModal from './CreatePostModal';
 import { useAuth } from '../../../contexts/AuthContext';
 import type { Post } from '../../../types/post';
+import type { Category } from '../../../types/category';
 
-const CATEGORY_COLORS: Record<string, string> = {
-  'sécurité': '#ef4444',
-  'transport': '#3b82f6',
-  'arnaque': '#f97316',
-  'culture': '#8b5cf6',
-  'incident': '#6b7280',
-};
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -28,9 +22,10 @@ function timeAgo(dateStr: string): string {
 type Props = {
   post: Post;
   onDeleted: (id: string) => void;
+  categories: Category[];
 };
 
-export default function PostCard({ post, onDeleted }: Props) {
+export default function PostCard({ post, onDeleted, categories }: Props) {
   const { user } = useAuth();
   const [upvotes, setUpvotes] = useState(post.upvotes.length);
   const [downvotes, setDownvotes] = useState(post.downvotes.length);
@@ -76,7 +71,7 @@ export default function PostCard({ post, onDeleted }: Props) {
     if (result.success) setReported(true);
   };
 
-  const categoryColor = CATEGORY_COLORS[post.category] ?? '#6b7280';
+  const categoryColor = categories.find((c) => c.slug === post.category)?.color ?? '#6b7280';
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
@@ -181,6 +176,7 @@ export default function PostCard({ post, onDeleted }: Props) {
           editPost={currentPost}
           onClose={() => setShowEditModal(false)}
           onCreated={(updated) => setCurrentPost(updated)}
+          categories={categories}
         />
       )}
     </div>

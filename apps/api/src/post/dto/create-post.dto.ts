@@ -1,5 +1,4 @@
-import { IsEnum, IsNotEmpty, IsString, MaxLength } from 'class-validator';
-import { PostCategory } from '../enums/post-category.enum';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class CreatePostDto {
   @IsString()
@@ -16,6 +15,7 @@ export class CreatePostDto {
   @IsNotEmpty()
   destination!: string;
 
-  @IsEnum(PostCategory)
-  category!: PostCategory;
+  @IsString()
+  @IsNotEmpty()
+  category!: string;
 }
