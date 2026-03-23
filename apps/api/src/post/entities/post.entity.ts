@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { PostCategory } from '../enums/post-category.enum';
 
 export type PostDocument = Post & Document;
 
@@ -15,8 +14,8 @@ export class Post {
   @Prop({ required: true })
   destination!: string;
 
-  @Prop({ type: String, enum: PostCategory, required: true })
-  category!: PostCategory;
+  @Prop({ required: true })
+  category!: string;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   author!: Types.ObjectId;

@@ -5,7 +5,10 @@ import {
   Users, FileText, Lightbulb, ShieldAlert,
   Trash2, UserCheck, UserX, ChevronDown, Search,
   BarChart3, AlertTriangle, ChevronLeft, ChevronRight,
+  Tag, Plus, Pencil, X, Check,
 } from 'lucide-react';
+import { adminCreateCategory, adminUpdateCategory, adminDeleteCategory } from '../../../lib/category';
+import type { Category } from '../../../types/category';
 import {
   adminUpdateRole, adminToggleActive, adminDeleteUser,
   adminDeletePost, adminDeleteAdvice,
@@ -13,7 +16,7 @@ import {
 } from '../../../lib/admin';
 import type { AdminStats, AdminUser, AdminPost, AdminAdvice, AdminPagedResponse } from '../../../types/admin';
 
-type Tab = 'overview' | 'users' | 'posts' | 'advices';
+type Tab = 'overview' | 'users' | 'posts' | 'advices' | 'categories';
 
 const LIMIT = 5;
 
@@ -176,9 +179,10 @@ type Props = {
   initialUsers: AdminPagedResponse<AdminUser>;
   initialPosts: AdminPagedResponse<AdminPost>;
   initialAdvices: AdminPagedResponse<AdminAdvice>;
+  initialCategories: Category[];
 };
 
-export default function AdminClient({ initialStats, initialUsers, initialPosts, initialAdvices }: Props) {
+export default function AdminClient({ initialStats, initialUsers, initialPosts, initialAdvices, initialCategories }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
   const [stats] = useState(initialStats);
 
@@ -197,6 +201,12 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
   const [advicesTotal, setAdvicesTotal]   = useState(initialAdvices.total);
   const [advicesPage, setAdvicesPage]     = useState(1);
   const [isPendingAdvices, startAdvices]  = useTransition();
+
+  const [categories, setCategories]         = useState<Category[]>(initialCategories);
+  const [catForm, setCatForm]               = useState({ name: '', color: '#6b7280' });
+  const [editingCat, setEditingCat]         = useState<Category | null>(null);
+  const [catError, setCatError]             = useState('');
+  const [isPendingCat, startCat]            = useTransition();
 
   const loadUsers = (page: number, search: string) => {
     startUsers(async () => {
@@ -269,11 +279,45 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
     });
   };
 
+  const handleCreateCategory = () => {
+    if (!catForm.name.trim()) { setCatError('Le nom est requis'); return; }
+    setCatError('');
+    startCat(async () => {
+      const res = await adminCreateCategory(catForm);
+      if (res.success) {
+        setCategories((prev) => [...prev, res.data]);
+        setCatForm({ name: '', color: '#6b7280' });
+      } else {
+        setCatError(res.error);
+      }
+    });
+  };
+
+  const handleUpdateCategory = () => {
+    if (!editingCat) return;
+    startCat(async () => {
+      const res = await adminUpdateCategory(editingCat._id, { name: editingCat.name, color: editingCat.color });
+      if (res.success) {
+        setCategories((prev) => prev.map((c) => (c._id === res.data._id ? res.data : c)));
+        setEditingCat(null);
+      }
+    });
+  };
+
+  const handleDeleteCategory = (id: string) => {
+    if (!confirm('Supprimer cette catégorie ?')) return;
+    startCat(async () => {
+      const res = await adminDeleteCategory(id);
+      if (res.success) setCategories((prev) => prev.filter((c) => c._id !== id));
+    });
+  };
+
   const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: 'overview', label: "Vue d'ensemble", icon: <BarChart3 size={15} /> },
-    { key: 'users',    label: 'Utilisateurs',   icon: <Users size={15} /> },
-    { key: 'posts',    label: 'Publications',    icon: <FileText size={15} /> },
-    { key: 'advices',  label: 'Conseils',        icon: <Lightbulb size={15} /> },
+    { key: 'overview',   label: "Vue d'ensemble", icon: <BarChart3 size={15} /> },
+    { key: 'users',      label: 'Utilisateurs',   icon: <Users size={15} /> },
+    { key: 'posts',      label: 'Publications',    icon: <FileText size={15} /> },
+    { key: 'advices',    label: 'Conseils',        icon: <Lightbulb size={15} /> },
+    { key: 'categories', label: 'Catégories',      icon: <Tag size={15} /> },
   ];
 
   return (
@@ -517,6 +561,92 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
               {advices.length === 0 && <p className="text-center py-8 text-sm text-gray-400">Aucun conseil</p>}
             </div>
             <Pagination page={advicesPage} total={advicesTotal} limit={LIMIT} onChange={loadAdvices} disabled={isPendingAdvices} />
+          </div>
+        )}
+
+        {/* TAB: Categories */}
+        {tab === 'categories' && (
+          <div className="flex flex-col gap-6">
+
+            {/* Create form */}
+            <div className="bg-white rounded-2xl shadow-sm p-5">
+              <p className="text-sm font-semibold text-[#1a1a2e] mb-4">Nouvelle catégorie</p>
+              {catError && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg mb-3">{catError}</p>}
+              <div className="flex items-end gap-3">
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-gray-500">Nom</label>
+                  <input
+                    type="text"
+                    value={catForm.name}
+                    onChange={(e) => setCatForm({ ...catForm, name: e.target.value })}
+                    placeholder="Ex : Hébergement"
+                    className="px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-gray-500">Couleur</label>
+                  <input
+                    type="color"
+                    value={catForm.color}
+                    onChange={(e) => setCatForm({ ...catForm, color: e.target.value })}
+                    className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer p-1"
+                  />
+                </div>
+                <button
+                  onClick={handleCreateCategory}
+                  disabled={isPendingCat}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  <Plus size={15} />
+                  Ajouter
+                </button>
+              </div>
+            </div>
+
+            {/* List */}
+            <div className={`bg-white rounded-2xl shadow-sm overflow-hidden ${isPendingCat ? 'opacity-50' : ''}`}>
+              {categories.map((cat) => (
+                <div key={cat._id} className="flex items-center gap-4 px-5 py-3.5 border-b border-gray-50 last:border-0">
+                  {editingCat?._id === cat._id ? (
+                    <>
+                      <input
+                        type="color"
+                        value={editingCat.color}
+                        onChange={(e) => setEditingCat({ ...editingCat, color: e.target.value })}
+                        className="w-8 h-8 rounded-lg border border-gray-200 cursor-pointer p-0.5 shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={editingCat.name}
+                        onChange={(e) => setEditingCat({ ...editingCat, name: e.target.value })}
+                        className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-blue-500"
+                      />
+                      <button onClick={handleUpdateCategory} className="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center hover:bg-green-100 transition-colors">
+                        <Check size={13} className="text-green-600" />
+                      </button>
+                      <button onClick={() => setEditingCat(null)} className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                        <X size={13} className="text-gray-500" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="w-4 h-4 rounded-full shrink-0" style={{ background: cat.color }} />
+                      <span className="flex-1 text-sm font-medium text-[#1a1a2e]">{cat.name}</span>
+                      <span className="text-xs text-gray-400 font-mono">{cat.slug}</span>
+                      <button onClick={() => setEditingCat(cat)} className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                        <Pencil size={13} className="text-gray-500" />
+                      </button>
+                      <button onClick={() => handleDeleteCategory(cat._id)} className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center hover:bg-red-100 transition-colors">
+                        <Trash2 size={13} className="text-red-600" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))}
+              {categories.length === 0 && (
+                <p className="text-center py-8 text-sm text-gray-400">Aucune catégorie</p>
+              )}
+            </div>
           </div>
         )}
       </div>

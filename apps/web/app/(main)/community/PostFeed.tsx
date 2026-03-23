@@ -5,37 +5,30 @@ import { Plus, Search, SlidersHorizontal } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import PostCard from './PostCard';
 import CreatePostModal from './CreatePostModal';
-import type { Post, PostCategory } from '../../../types/post';
+import type { Post } from '../../../types/post';
+import type { Category } from '../../../types/category';
 import { apiGetPosts } from '../../../services/post.service';
-
-const CATEGORIES: { label: string; value: PostCategory | 'all' }[] = [
-  { label: 'Tous', value: 'all' },
-  { label: 'Sécurité', value: 'sécurité' },
-  { label: 'Transport', value: 'transport' },
-  { label: 'Arnaque', value: 'arnaque' },
-  { label: 'Culture', value: 'culture' },
-  { label: 'Incident', value: 'incident' },
-];
 
 type Props = {
   initialPosts: Post[];
   initialTotal: number;
+  categories: Category[];
 };
 
-export default function PostFeed({ initialPosts, initialTotal }: Props) {
+export default function PostFeed({ initialPosts, initialTotal, categories }: Props) {
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [total, setTotal] = useState(initialTotal);
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState<PostCategory | 'all'>('all');
+  const [category, setCategory] = useState<string>('all');
   const [sort, setSort] = useState<'recent' | 'popular'>('recent');
   const [page, setPage] = useState(1);
   const [isPending, startTransition] = useTransition();
 
   const fetchPosts = (params: {
     destination?: string;
-    category?: PostCategory | 'all';
+    category?: string;
     sort?: 'recent' | 'popular';
     page?: number;
   }) => {
@@ -62,7 +55,7 @@ export default function PostFeed({ initialPosts, initialTotal }: Props) {
     fetchPosts({ destination: value, category, sort, page: 1 });
   };
 
-  const handleCategory = (value: PostCategory | 'all') => {
+  const handleCategory = (value: string) => {
     setCategory(value);
     setPage(1);
     fetchPosts({ destination: search, category: value, sort, page: 1 });
@@ -123,17 +116,24 @@ export default function PostFeed({ initialPosts, initialTotal }: Props) {
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          {CATEGORIES.map((c) => (
+          <button
+            onClick={() => handleCategory('all')}
+            className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              category === 'all' ? 'bg-[#1a73e8] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Tous
+          </button>
+          {categories.map((c) => (
             <button
-              key={c.value}
-              onClick={() => handleCategory(c.value)}
+              key={c._id}
+              onClick={() => handleCategory(c.slug)}
               className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                category === c.value
-                  ? 'bg-[#1a73e8] text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                category === c.slug ? 'text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
+              style={category === c.slug ? { background: c.color } : {}}
             >
-              {c.label}
+              {c.name}
             </button>
           ))}
 
@@ -162,7 +162,7 @@ export default function PostFeed({ initialPosts, initialTotal }: Props) {
       ) : (
         <div className="flex flex-col gap-4">
           {posts.map((post) => (
-            <PostCard key={post._id} post={post} onDeleted={handleDeleted} />
+            <PostCard key={post._id} post={post} onDeleted={handleDeleted} categories={categories} />
           ))}
 
           {posts.length < total && (
@@ -178,7 +178,7 @@ export default function PostFeed({ initialPosts, initialTotal }: Props) {
       )}
 
       {showModal && (
-        <CreatePostModal onClose={() => setShowModal(false)} onCreated={handleCreated} />
+        <CreatePostModal onClose={() => setShowModal(false)} onCreated={handleCreated} categories={categories} />
       )}
     </div>
   );

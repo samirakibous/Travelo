@@ -11,6 +11,7 @@ import { GuideModule } from './guide/guide.module';
 import { SafeZoneModule } from './safety-zone/safety-zone.module';
 import { AdviceModule } from './advice/advice.module';
 import { AdminModule } from './admin/admin.module';
+import { CategoryModule } from './category/category.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { AdminModule } from './admin/admin.module';
     SafeZoneModule,
     AdviceModule,
     AdminModule,
+    CategoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
