@@ -6,6 +6,7 @@ import {
   apiAdminGetUsers,
   apiAdminUpdateRole,
   apiAdminToggleActive,
+  apiAdminDeleteUser,
   apiAdminGetPosts,
   apiAdminDeletePost,
   apiAdminGetAdvices,
@@ -40,6 +41,17 @@ export async function adminUpdateRole(
   try {
     const data = await apiAdminUpdateRole(await getToken(), userId, role);
     return { success: true, data };
+  } catch (e) {
+    return { success: false, error: parseApiError(e) };
+  }
+}
+
+export async function adminDeleteUser(
+  userId: string,
+): Promise<{ success: true } | { success: false; error: string }> {
+  try {
+    await apiAdminDeleteUser(await getToken(), userId);
+    return { success: true };
   } catch (e) {
     return { success: false, error: parseApiError(e) };
   }

@@ -32,6 +32,12 @@ export async function apiAdminUpdateRole(
   return data;
 }
 
+export async function apiAdminDeleteUser(token: string, userId: string): Promise<void> {
+  await api.delete(`/admin/users/${userId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 export async function apiAdminToggleActive(
   token: string,
   userId: string,

@@ -79,6 +79,12 @@ export class AdminService {
     return { id: userId, isActive: user.isActive };
   }
 
+  async deleteUser(userId: string) {
+    const result = await this.userModel.findByIdAndDelete(userId);
+    if (!result) throw new NotFoundException('Utilisateur introuvable');
+    return { success: true };
+  }
+
   async getPosts(page = 1, limit = 20) {
     const [data, total] = await Promise.all([
       this.postModel

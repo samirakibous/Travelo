@@ -46,6 +46,11 @@ export class AdminController {
     return this.adminService.toggleUserActive(id);
   }
 
+  @Delete('users/:id')
+  deleteUser(@Param('id') id: string) {
+    return this.adminService.deleteUser(id);
+  }
+
   @Get('posts')
   getPosts(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
