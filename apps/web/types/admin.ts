@@ -22,7 +22,7 @@ export type AdminPost = {
   title: string;
   description: string;
   destination: string;
-  category: string;
+  category: { _id: string; name: string; color: string };
   author: { _id: string; firstName: string; lastName: string; email: string };
   reports: string[];
   createdAt: string;

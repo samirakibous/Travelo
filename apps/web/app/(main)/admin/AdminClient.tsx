@@ -601,7 +601,12 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
                     </div>
                     <p className="text-xs text-gray-500 truncate">{post.description}</p>
                     <div className="flex items-center gap-3 mt-2">
-                      <CategoryBadge category={post.category} />
+                      <span
+                        className="px-2 py-0.5 rounded-full text-xs font-semibold"
+                        style={{ backgroundColor: `${post.category?.color}18`, color: post.category?.color ?? '#6b7280' }}
+                      >
+                        {post.category?.name ?? '—'}
+                      </span>
                       <span className="text-xs text-gray-400">{post.destination}</span>
                       <span className="text-xs text-gray-400">par {post.author?.firstName} {post.author?.lastName}</span>
                     </div>
