@@ -90,6 +90,7 @@ export class AdminService {
       this.postModel
         .find()
         .populate('author', 'firstName lastName email')
+        .populate('category')
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
