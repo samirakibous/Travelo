@@ -13,6 +13,7 @@ import { AdviceModule } from './advice/advice.module';
 import { AdminModule } from './admin/admin.module';
 import { CategoryModule } from './category/category.module';
 import { SpecialtyModule } from './specialty/specialty.module';
+import { ReviewModule } from './review/review.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { SpecialtyModule } from './specialty/specialty.module';
     AdminModule,
     CategoryModule,
     SpecialtyModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [AppService],

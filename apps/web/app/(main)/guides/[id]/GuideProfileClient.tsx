@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 import type { GuideProfile } from '../../../../types/guide';
 import type { Advice, AdviceCategory } from '../../../../types/advice';
+import type { Review } from '../../../../types/review';
+import { createReview } from '../../../../lib/review';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:3000';
 
@@ -69,9 +71,11 @@ function buildCalendar(year: number, month: number) {
 type Props = {
   guide: GuideProfile;
   advices: Advice[];
+  reviews: Review[];
+  canReview: boolean;
 };
 
-export default function GuideProfileClient({ guide, advices }: Props) {
+export default function GuideProfileClient({ guide, advices, reviews: initialReviews, canReview }: Props) {
   const { userId, bio, location, hourlyRate, specialties, languages, expertiseLevel, rating, reviewCount, isCertified } = guide;
   const fullName = `${userId.firstName} ${userId.lastName}`;
   const avatarSrc = userId.profilePicture ? `${API_URL}${userId.profilePicture}` : null;
@@ -88,6 +92,15 @@ export default function GuideProfileClient({ guide, advices }: Props) {
     { from: 'guide', text: `Bonjour ! Je suis disponible pour vous guider à ${location}. Comment puis-je vous aider ?` },
   ]);
   const [expandedAdvice, setExpandedAdvice] = useState<string | null>(null);
+
+  // Reviews state
+  const [reviews, setReviews] = useState<Review[]>(initialReviews);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewHover, setReviewHover] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewError, setReviewError] = useState('');
+  const [reviewPending, setReviewPending] = useState(false);
 
   const { firstDay, daysInMonth } = buildCalendar(calYear, calMonth);
 
@@ -107,6 +120,20 @@ export default function GuideProfileClient({ guide, advices }: Props) {
     setTimeout(() => {
       setChatMessages(prev => [...prev, { from: 'guide', text: 'Merci pour votre message ! Je vous répondrai dès que possible.' }]);
     }, 800);
+  };
+
+  const submitReview = async () => {
+    if (reviewRating === 0) { setReviewError('Veuillez choisir une note'); return; }
+    if (!reviewComment.trim()) { setReviewError('Veuillez écrire un commentaire'); return; }
+    setReviewError('');
+    setReviewPending(true);
+    const result = await createReview(guide._id, { rating: reviewRating, comment: reviewComment });
+    setReviewPending(false);
+    if (!result.success) { setReviewError(result.error); return; }
+    setReviews(prev => [result.data, ...prev]);
+    setShowReviewForm(false);
+    setReviewRating(0);
+    setReviewComment('');
   };
 
   const tripsCompleted = Math.max(reviewCount * 4, 12);
@@ -371,29 +398,138 @@ export default function GuideProfileClient({ guide, advices }: Props) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Star size={18} color="#f59e0b" fill="#f59e0b" />
                   <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#1a1a2e' }}>Expériences des voyageurs</h2>
+                  {reviews.length > 0 && (
+                    <span style={{ background: '#fff8e1', color: '#f59e0b', fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 20 }}>
+                      {reviews.length}
+                    </span>
+                  )}
                 </div>
+                {canReview && (
+                  <button
+                    onClick={() => setShowReviewForm(v => !v)}
+                    style={{
+                      fontSize: 12, color: '#1a73e8', background: showReviewForm ? '#e8f0fe' : 'none',
+                      border: '1px solid #1a73e8', borderRadius: 8, padding: '5px 12px',
+                      cursor: 'pointer', fontWeight: 500,
+                    }}
+                  >
+                    {showReviewForm ? 'Annuler' : 'Écrire un avis'}
+                  </button>
+                )}
               </div>
 
-              {reviewCount === 0 ? (
-                <div style={{ textAlign: 'center', padding: '32px 0', color: '#888' }}>
+              {/* Review form */}
+              {showReviewForm && (
+                <div style={{ background: '#f8f9fa', borderRadius: 10, padding: 16, marginBottom: 20, border: '1px solid #e8eaed' }}>
+                  <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 600, color: '#1a1a2e' }}>Votre note</p>
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <button
+                        key={i}
+                        onMouseEnter={() => setReviewHover(i)}
+                        onMouseLeave={() => setReviewHover(0)}
+                        onClick={() => setReviewRating(i)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}
+                      >
+                        <Star
+                          size={28}
+                          color="#f59e0b"
+                          fill={i <= (reviewHover || reviewRating) ? '#f59e0b' : 'none'}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reviewComment}
+                    onChange={e => setReviewComment(e.target.value)}
+                    placeholder="Décrivez votre expérience avec ce guide..."
+                    rows={3}
+                    style={{
+                      width: '100%', padding: '10px 12px', borderRadius: 8,
+                      border: '1px solid #e0e0e0', fontSize: 13, resize: 'vertical',
+                      outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box',
+                    }}
+                  />
+                  {reviewError && (
+                    <p style={{ margin: '6px 0 0', fontSize: 12, color: '#c62828' }}>{reviewError}</p>
+                  )}
+                  <button
+                    onClick={submitReview}
+                    disabled={reviewPending}
+                    style={{
+                      marginTop: 10, padding: '9px 20px', borderRadius: 8,
+                      background: reviewPending ? '#9db8e8' : '#1a73e8',
+                      color: '#fff', fontWeight: 600, fontSize: 13,
+                      border: 'none', cursor: reviewPending ? 'default' : 'pointer',
+                    }}
+                  >
+                    {reviewPending ? 'Publication...' : 'Publier'}
+                  </button>
+                </div>
+              )}
+
+              {/* Summary */}
+              {reviews.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                  <div style={{ display: 'flex', gap: 3 }}>
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <Star key={i} size={16} color="#f59e0b" fill={i <= Math.round(rating) ? '#f59e0b' : 'none'} />
+                    ))}
+                  </div>
+                  <span style={{ fontSize: 22, fontWeight: 700, color: '#1a1a2e' }}>{rating.toFixed(1)}</span>
+                  <span style={{ fontSize: 13, color: '#888' }}>({reviews.length} avis)</span>
+                </div>
+              )}
+
+              {/* Review list */}
+              {reviews.length === 0 && !showReviewForm ? (
+                <div style={{ textAlign: 'center', padding: '28px 0', color: '#888' }}>
                   <MessageCircle size={36} color="#ccc" style={{ marginBottom: 12 }} />
                   <p style={{ margin: 0, fontSize: 14, fontWeight: 500 }}>Aucun avis pour l'instant</p>
                   <p style={{ margin: '6px 0 0', fontSize: 13 }}>Soyez le premier à laisser un avis !</p>
                 </div>
               ) : (
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                    <div style={{ display: 'flex', gap: 3 }}>
-                      {[1, 2, 3, 4, 5].map(i => (
-                        <Star key={i} size={18} color="#f59e0b" fill={i <= Math.round(rating) ? '#f59e0b' : 'none'} />
-                      ))}
-                    </div>
-                    <span style={{ fontSize: 24, fontWeight: 700, color: '#1a1a2e' }}>{rating.toFixed(1)}</span>
-                    <span style={{ fontSize: 13, color: '#888' }}>({reviewCount} avis)</span>
-                  </div>
-                  <p style={{ margin: 0, fontSize: 13, color: '#888', fontStyle: 'italic' }}>
-                    Les avis détaillés seront disponibles prochainement.
-                  </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {reviews.map((review) => {
+                    const tourist = review.touristId;
+                    const avatarUrl = tourist.profilePicture ? `${API_URL}${tourist.profilePicture}` : null;
+                    const initials2 = `${tourist.firstName[0]}${tourist.lastName[0]}`.toUpperCase();
+                    const daysAgo = Math.floor((Date.now() - new Date(review.createdAt).getTime()) / 86400000);
+                    const timeLabel = daysAgo === 0 ? "Aujourd'hui" : daysAgo === 1 ? 'Il y a 1 jour' : `Il y a ${daysAgo} jours`;
+
+                    return (
+                      <div key={review._id} style={{ borderBottom: '1px solid #f1f3f4', paddingBottom: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                          {/* Avatar */}
+                          <div style={{
+                            width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
+                            background: '#e8f0fe', overflow: 'hidden',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            {avatarUrl ? (
+                              <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <span style={{ fontSize: 13, fontWeight: 700, color: '#1a73e8' }}>{initials2}</span>
+                            )}
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: '#1a1a2e' }}>
+                                {tourist.firstName} {tourist.lastName}
+                              </span>
+                              <span style={{ fontSize: 11, color: '#aaa' }}>{timeLabel}</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: 2, margin: '4px 0 6px' }}>
+                              {[1, 2, 3, 4, 5].map(i => (
+                                <Star key={i} size={12} color="#f59e0b" fill={i <= review.rating ? '#f59e0b' : 'none'} />
+                              ))}
+                            </div>
+                            <p style={{ margin: 0, fontSize: 13, color: '#555', lineHeight: 1.5 }}>{review.comment}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
