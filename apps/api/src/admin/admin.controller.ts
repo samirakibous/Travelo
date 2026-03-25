@@ -76,4 +76,17 @@ export class AdminController {
   deleteAdvice(@Param('id') id: string) {
     return this.adminService.deleteAdvice(id);
   }
+
+  @Get('reviews')
+  getReviews(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ) {
+    return this.adminService.getReviews(page, limit);
+  }
+
+  @Delete('reviews/:id')
+  deleteReview(@Param('id') id: string) {
+    return this.adminService.deleteReview(id);
+  }
 }

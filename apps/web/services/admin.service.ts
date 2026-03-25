@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { AdminStats, AdminUser, AdminPost, AdminAdvice, AdminPagedResponse } from '../types/admin';
+import type { AdminStats, AdminUser, AdminPost, AdminAdvice, AdminReview, AdminPagedResponse } from '../types/admin';
 
 export async function apiAdminGetStats(token: string): Promise<AdminStats> {
   const { data } = await api.get('/admin/stats', {
@@ -80,6 +80,23 @@ export async function apiAdminGetAdvices(
 
 export async function apiAdminDeleteAdvice(token: string, adviceId: string): Promise<void> {
   await api.delete(`/admin/advices/${adviceId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function apiAdminGetReviews(
+  token: string,
+  params: { page?: number; limit?: number } = {},
+): Promise<AdminPagedResponse<AdminReview>> {
+  const { data } = await api.get('/admin/reviews', {
+    headers: { Authorization: `Bearer ${token}` },
+    params,
+  });
+  return data;
+}
+
+export async function apiAdminDeleteReview(token: string, reviewId: string): Promise<void> {
+  await api.delete(`/admin/reviews/${reviewId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
