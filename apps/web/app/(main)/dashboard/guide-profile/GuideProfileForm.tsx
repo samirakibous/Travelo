@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Save, X, MapPin, DollarSign, BookOpen, Globe, Star, AlertCircle, CheckCircle } from 'lucide-react';
+import { Save, X, MapPin, DollarSign, BookOpen, Globe, Star, AlertCircle, CheckCircle, Briefcase, Award } from 'lucide-react';
 import { createGuideProfile, updateGuideProfile } from '../../../../lib/guide';
 import type { GuideProfilePayload } from '../../../../lib/guide';
 import type { GuideProfile } from '../../../../types/guide';
@@ -120,6 +120,8 @@ export default function GuideProfileForm({
     bio: existing?.bio ?? '',
     location: existing?.location ?? '',
     hourlyRate: existing?.hourlyRate ?? 50,
+    yearsExperience: existing?.yearsExperience ?? 0,
+    tripsCompleted: existing?.tripsCompleted ?? 0,
     specialties: existing?.specialties.map((s) => s._id) ?? [],
     languages: existing?.languages ?? [],
     expertiseLevel: existing?.expertiseLevel ?? 'local',
@@ -172,7 +174,7 @@ export default function GuideProfileForm({
         </div>
       </div>
 
-      {/* Localisation & Tarif */}
+      {/* Localisation & Tarif & Stats */}
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
@@ -199,6 +201,32 @@ export default function GuideProfileForm({
             value={form.hourlyRate}
             onChange={(e) => setForm({ ...form, hourlyRate: Number(e.target.value) })}
             required
+            className="px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1a73e8] transition-colors"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <Award size={16} color="#1a73e8" />
+            <label className="text-sm font-medium text-[#1a1a2e]">Années d&apos;expérience</label>
+          </div>
+          <input
+            type="number"
+            min={0}
+            value={form.yearsExperience}
+            onChange={(e) => setForm({ ...form, yearsExperience: Number(e.target.value) })}
+            className="px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1a73e8] transition-colors"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <Briefcase size={16} color="#1a73e8" />
+            <label className="text-sm font-medium text-[#1a1a2e]">Voyages complétés</label>
+          </div>
+          <input
+            type="number"
+            min={0}
+            value={form.tripsCompleted}
+            onChange={(e) => setForm({ ...form, tripsCompleted: Number(e.target.value) })}
             className="px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1a73e8] transition-colors"
           />
         </div>

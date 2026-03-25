@@ -5,6 +5,7 @@ import {
   IsMongoId,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
   MaxLength,
   Min,
@@ -24,6 +25,16 @@ export class CreateGuideProfileDto {
   @IsNumber()
   @Min(0)
   hourlyRate!: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  yearsExperience?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  tripsCompleted?: number;
 
   @IsArray()
   @ArrayNotEmpty()

@@ -14,6 +14,8 @@ export type GuideProfile = {
   bio: string;
   location: string;
   hourlyRate: number;
+  yearsExperience: number;
+  tripsCompleted: number;
   specialties: Specialty[];
   languages: string[];
   expertiseLevel: ExpertiseLevel;

@@ -76,7 +76,7 @@ type Props = {
 };
 
 export default function GuideProfileClient({ guide, advices, reviews: initialReviews, canReview }: Props) {
-  const { userId, bio, location, hourlyRate, specialties, languages, expertiseLevel, rating, reviewCount, isCertified } = guide;
+  const { userId, bio, location, hourlyRate, yearsExperience, tripsCompleted, specialties, languages, expertiseLevel, rating, reviewCount, isCertified } = guide;
   const fullName = `${userId.firstName} ${userId.lastName}`;
   const avatarSrc = userId.profilePicture ? `${API_URL}${userId.profilePicture}` : null;
   const initials = `${userId.firstName[0]}${userId.lastName[0]}`.toUpperCase();
@@ -136,8 +136,6 @@ export default function GuideProfileClient({ guide, advices, reviews: initialRev
     setReviewComment('');
   };
 
-  const tripsCompleted = Math.max(reviewCount * 4, 12);
-  const yearsExperience = Math.max(Math.floor((guide._id.charCodeAt(0) % 12) + 3), 3);
 
   // Map pins from real advices (only those with valid coords)
   const mapPins = advices.filter(a => a.lat && a.lng).slice(0, 8);
