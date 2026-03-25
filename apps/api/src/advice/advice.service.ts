@@ -27,6 +27,9 @@ export class AdviceService {
     if (query.certifiedOnly === 'true') {
       filter.isCertifiedGuide = true;
     }
+    if (query.authorId) {
+      filter.author = query.authorId;
+    }
 
     return this.adviceModel
       .find(filter)

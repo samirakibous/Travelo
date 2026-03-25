@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { MapPin, Star, Mail, BadgeCheck } from 'lucide-react';
 import type { GuideProfile } from '../../../types/guide';
 
@@ -22,7 +23,8 @@ export default function GuideCard({ guide }: Props) {
   const initials = `${userId.firstName[0]}${userId.lastName[0]}`.toUpperCase();
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
+    <Link href={`/guides/${guide._id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'contents' }}>
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow flex flex-col" style={{ cursor: 'pointer' }}>
       {/* Photo */}
       <div className="relative h-48 bg-[#e8f0fe]">
         {avatarSrc ? (
@@ -91,5 +93,6 @@ export default function GuideCard({ guide }: Props) {
         </div>
       </div>
     </div>
+    </Link>
   );
 }

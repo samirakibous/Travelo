@@ -23,4 +23,5 @@ export type Advice = {
 export type AdviceQuery = {
   category?: string;
   certifiedOnly?: 'true' | 'false';
+  authorId?: string;
 };

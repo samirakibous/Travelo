@@ -8,4 +8,8 @@ export class QueryAdviceDto {
   @IsOptional()
   @IsEnum(['true', 'false'])
   certifiedOnly?: string;
+
+  @IsOptional()
+  @IsString()
+  authorId?: string;
 }
