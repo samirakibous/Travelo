@@ -15,6 +15,10 @@ import { CategoryModule } from './category/category.module';
 import { SpecialtyModule } from './specialty/specialty.module';
 import { ReviewModule } from './review/review.module';
 import { BookingModule } from './booking/booking.module';
+import { MessagingModule } from './messaging/messaging.module';
+import { SosModule } from './sos/sos.module';
+import { CommentModule } from './comment/comment.module';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
@@ -43,6 +47,10 @@ import { BookingModule } from './booking/booking.module';
     SpecialtyModule,
     ReviewModule,
     BookingModule,
+    MessagingModule,
+    SosModule,
+    CommentModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

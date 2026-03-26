@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
   Request,
@@ -22,6 +23,7 @@ import * as fs from 'fs';
 import { AdviceService } from './advice.service';
 import { CreateAdviceDto } from './dto/create-advice.dto';
 import { QueryAdviceDto } from './dto/query-advice.dto';
+import { VoteAdviceDto } from './dto/vote-advice.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -78,7 +80,7 @@ export class AdviceController {
         }
         cb(null, true);
       },
-      limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB per file
+      limits: { fileSize: 20 * 1024 * 1024 },
     }),
   )
   async create(
@@ -88,6 +90,17 @@ export class AdviceController {
   ) {
     const mediaUrls = (files ?? []).map((f) => `/uploads/advice/${f.filename}`);
     return this.adviceService.create(req.user.id, dto, mediaUrls);
+  }
+
+  @Patch(':id/vote')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  vote(
+    @Param('id') id: string,
+    @Body() dto: VoteAdviceDto,
+    @Request() req: AuthRequest,
+  ) {
+    return this.adviceService.vote(id, req.user.id, dto.type);
   }
 
   @Delete(':id')

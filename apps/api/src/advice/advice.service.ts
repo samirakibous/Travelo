@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Advice, AdviceDocument } from './entities/advice.entity';
 import { GuideProfile, GuideProfileDocument } from '../guide/entities/guide-profile.entity';
 import { CreateAdviceDto } from './dto/create-advice.dto';
@@ -29,6 +29,9 @@ export class AdviceService {
     }
     if (query.authorId) {
       filter.author = query.authorId;
+    }
+    if (query.adviceType) {
+      filter.adviceType = { $in: query.adviceType.split(',') };
     }
 
     return this.adviceModel
@@ -56,7 +59,6 @@ export class AdviceService {
   }
 
   async create(userId: string, dto: CreateAdviceDto, mediaUrls: string[]) {
-    // Check if guide has a certified profile
     const profile = await this.guideProfileModel.findOne({ userId });
     const isCertifiedGuide = profile?.isCertified ?? false;
 
@@ -69,6 +71,42 @@ export class AdviceService {
 
     await advice.save();
     return advice.populate('author', 'firstName lastName profilePicture');
+  }
+
+  async vote(id: string, userId: string, type: 'useful' | 'not_useful') {
+    const advice = await this.adviceModel.findById(id);
+    if (!advice) throw new NotFoundException('Conseil introuvable');
+
+    const uid = new Types.ObjectId(userId);
+    const hasUseful    = advice.usefulVotes.some((v) => v.equals(uid));
+    const hasNotUseful = advice.notUsefulVotes.some((v) => v.equals(uid));
+
+    if (type === 'useful') {
+      if (hasUseful) {
+        advice.usefulVotes = advice.usefulVotes.filter((v) => !v.equals(uid));
+      } else {
+        advice.notUsefulVotes = advice.notUsefulVotes.filter((v) => !v.equals(uid));
+        advice.usefulVotes.push(uid);
+      }
+    } else {
+      if (hasNotUseful) {
+        advice.notUsefulVotes = advice.notUsefulVotes.filter((v) => !v.equals(uid));
+      } else {
+        advice.usefulVotes = advice.usefulVotes.filter((v) => !v.equals(uid));
+        advice.notUsefulVotes.push(uid);
+      }
+    }
+
+    await advice.save();
+
+    const newHasUseful    = advice.usefulVotes.some((v) => v.equals(uid));
+    const newHasNotUseful = advice.notUsefulVotes.some((v) => v.equals(uid));
+
+    return {
+      usefulVotes:    advice.usefulVotes.length,
+      notUsefulVotes: advice.notUsefulVotes.length,
+      userVote: newHasUseful ? 'useful' : newHasNotUseful ? 'not_useful' : null,
+    };
   }
 
   async remove(id: string, userId: string, userRole: string) {

@@ -28,6 +28,10 @@ export class CreateAdviceDto {
   address?: string;
 
   @IsOptional()
+  @IsEnum(['danger', 'prudence', 'recommandation'])
+  adviceType?: 'danger' | 'prudence' | 'recommandation';
+
+  @IsOptional()
   @IsString()
   linkedZone?: string;
 }
