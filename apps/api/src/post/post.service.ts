@@ -48,10 +48,11 @@ export class PostService {
     return { data, total, page, limit };
   }
 
-  async create(createPostDto: CreatePostDto, userId: string) {
+  async create(createPostDto: CreatePostDto, userId: string, mediaUrls: string[] = []) {
     const post = new this.postModel({
       ...createPostDto,
       author: new Types.ObjectId(userId),
+      mediaUrls,
     });
     await post.save();
     return post.populate(['author', 'category']);
