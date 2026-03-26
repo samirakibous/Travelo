@@ -8,7 +8,6 @@ import {
   BadgeCheck,
   ChevronLeft,
   ChevronRight,
-  Send,
   Globe,
   Shield,
   AlertTriangle,
@@ -27,6 +26,9 @@ import type { Advice, AdviceCategory } from '../../../../types/advice';
 import type { Review } from '../../../../types/review';
 import { createReview } from '../../../../lib/review';
 import { createBooking } from '../../../../lib/booking';
+import { findOrCreateConversation } from '../../../../lib/messaging';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../../../contexts/AuthContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:3000';
 
@@ -84,14 +86,14 @@ export default function GuideProfileClient({ guide, advices, reviews: initialRev
   const badgeLabel = EXPERTISE_LABELS[expertiseLevel] ?? expertiseLevel.toUpperCase();
   const badgeColor = EXPERTISE_COLORS[expertiseLevel] ?? '#1a73e8';
 
+  const router = useRouter();
+  const { user: currentUser } = useAuth();
+
   const today = new Date();
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
-  const [chatMessage, setChatMessage] = useState('');
-  const [chatMessages, setChatMessages] = useState<{ from: 'user' | 'guide'; text: string }[]>([
-    { from: 'guide', text: `Bonjour ! Je suis disponible pour vous guider à ${location}. Comment puis-je vous aider ?` },
-  ]);
+  const [contactPending, setContactPending] = useState(false);
   const [expandedAdvice, setExpandedAdvice] = useState<string | null>(null);
 
   // Booking state
@@ -135,13 +137,14 @@ export default function GuideProfileClient({ guide, advices, reviews: initialRev
     else setCalMonth(m => m + 1);
   };
 
-  const sendMessage = () => {
-    if (!chatMessage.trim()) return;
-    setChatMessages(prev => [...prev, { from: 'user', text: chatMessage }]);
-    setChatMessage('');
-    setTimeout(() => {
-      setChatMessages(prev => [...prev, { from: 'guide', text: 'Merci pour votre message ! Je vous répondrai dès que possible.' }]);
-    }, 800);
+  const handleContact = async () => {
+    if (!currentUser) { router.push('/login'); return; }
+    setContactPending(true);
+    const result = await findOrCreateConversation(userId._id);
+    setContactPending(false);
+    if (result.success) {
+      router.push(`/dashboard/messages/${result.data._id}`);
+    }
   };
 
   const submitReview = async () => {
@@ -693,46 +696,29 @@ export default function GuideProfileClient({ guide, advices, reviews: initialRev
               </button>
             </div>
 
-            {/* Chat */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e8eaed', overflow: 'hidden' }}>
-              <div style={{
-                padding: '14px 18px', borderBottom: '1px solid #f1f3f4',
-                display: 'flex', alignItems: 'center', gap: 8,
-              }}>
+            {/* Messagerie */}
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e8eaed', padding: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <MessageCircle size={16} color="#1a73e8" />
-                <span style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>Chat avec {userId.firstName}</span>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#2e7d32', marginLeft: 'auto' }} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>Contacter {userId.firstName}</span>
               </div>
-
-              <div style={{ padding: '14px 16px', minHeight: 140, maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {chatMessages.map((msg, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: msg.from === 'user' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{
-                      maxWidth: '80%', padding: '8px 12px', borderRadius: 12, fontSize: 12, lineHeight: 1.5,
-                      background: msg.from === 'user' ? '#1a73e8' : '#f1f3f4',
-                      color: msg.from === 'user' ? '#fff' : '#333',
-                      borderBottomRightRadius: msg.from === 'user' ? 2 : 12,
-                      borderBottomLeftRadius: msg.from === 'guide' ? 2 : 12,
-                    }}>
-                      {msg.text}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ padding: '10px 14px', borderTop: '1px solid #f1f3f4', display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input
-                  type="text"
-                  value={chatMessage}
-                  onChange={e => setChatMessage(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && sendMessage()}
-                  placeholder="Envoyer un message..."
-                  style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: '#1a1a2e', background: 'transparent' }}
-                />
-                <button onClick={sendMessage} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1a73e8', padding: 4 }}>
-                  <Send size={16} />
-                </button>
-              </div>
+              <p style={{ margin: '0 0 14px', fontSize: 13, color: '#6b7280', lineHeight: 1.5 }}>
+                Posez vos questions directement au guide avant de réserver.
+              </p>
+              <button
+                onClick={handleContact}
+                disabled={contactPending}
+                style={{
+                  width: '100%', padding: '11px 0', borderRadius: 10, border: 'none',
+                  background: contactPending ? '#9db8e8' : '#1a73e8',
+                  color: '#fff', fontWeight: 600, fontSize: 14,
+                  cursor: contactPending ? 'default' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                <MessageCircle size={16} />
+                {contactPending ? 'Ouverture...' : 'Envoyer un message'}
+              </button>
             </div>
           </div>
 

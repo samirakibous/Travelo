@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { UserCircle, Lightbulb, ShieldAlert, CalendarDays } from 'lucide-react';
+import { UserCircle, Lightbulb, ShieldAlert, CalendarDays, MessageCircle } from 'lucide-react';
 import { logout } from '../../../lib/auth';
 import { getUser } from '../../../lib/getUser';
 
@@ -78,6 +78,21 @@ export default async function DashboardPage() {
               <div>
                 <p className="font-semibold text-[#1a1a2e] text-sm">Mes conseils</p>
                 <p className="text-xs text-gray-500 mt-0.5">Publier des conseils de sécurité géolocalisés</p>
+              </div>
+            </Link>
+          )}
+
+          {(user.role === 'tourist' || user.role === 'guide') && (
+            <Link
+              href="/dashboard/messages"
+              className="flex items-center gap-4 bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow"
+            >
+              <div className="w-10 h-10 rounded-xl bg-[#e8f0fe] flex items-center justify-center shrink-0">
+                <MessageCircle size={20} color="#1a73e8" />
+              </div>
+              <div>
+                <p className="font-semibold text-[#1a1a2e] text-sm">Messages</p>
+                <p className="text-xs text-gray-500 mt-0.5">Discuter avec votre guide ou vos touristes</p>
               </div>
             </Link>
           )}
