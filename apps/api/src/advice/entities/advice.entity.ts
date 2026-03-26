@@ -4,6 +4,7 @@ import { Document, Types } from 'mongoose';
 export type AdviceDocument = Advice & Document;
 
 export type AdviceCategory = 'safety' | 'health' | 'transport' | 'culture' | 'emergency';
+export type AdviceType = 'danger' | 'prudence' | 'recommandation';
 
 @Schema({ timestamps: true })
 export class Advice {
@@ -16,6 +17,9 @@ export class Advice {
   @Prop({ required: true, enum: ['safety', 'health', 'transport', 'culture', 'emergency'] })
   category!: AdviceCategory;
 
+  @Prop({ required: true, enum: ['danger', 'prudence', 'recommandation'], default: 'prudence' })
+  adviceType!: AdviceType;
+
   @Prop({ required: true, type: Number })
   lat!: number;
 
@@ -27,6 +31,12 @@ export class Advice {
 
   @Prop({ type: [String], default: [] })
   mediaUrls!: string[];
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
+  usefulVotes!: Types.ObjectId[];
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
+  notUsefulVotes!: Types.ObjectId[];
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   author!: Types.ObjectId;
