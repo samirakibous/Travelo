@@ -26,6 +26,7 @@ import type { GuideProfile } from '../../../../types/guide';
 import type { Advice, AdviceCategory } from '../../../../types/advice';
 import type { Review } from '../../../../types/review';
 import { createReview } from '../../../../lib/review';
+import { createBooking } from '../../../../lib/booking';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:3000';
 
@@ -92,6 +93,27 @@ export default function GuideProfileClient({ guide, advices, reviews: initialRev
     { from: 'guide', text: `Bonjour ! Je suis disponible pour vous guider à ${location}. Comment puis-je vous aider ?` },
   ]);
   const [expandedAdvice, setExpandedAdvice] = useState<string | null>(null);
+
+  // Booking state
+  const [bookingMessage, setBookingMessage] = useState('');
+  const [bookingPending, setBookingPending] = useState(false);
+  const [bookingResult, setBookingResult] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const submitBooking = async () => {
+    if (!selectedDay) return;
+    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+    setBookingPending(true);
+    setBookingResult(null);
+    const result = await createBooking(guide._id, { date: dateStr, message: bookingMessage });
+    setBookingPending(false);
+    if (result.success) {
+      setBookingResult({ type: 'success', text: 'Demande envoyée ! Le guide vous répondra bientôt.' });
+      setSelectedDay(null);
+      setBookingMessage('');
+    } else {
+      setBookingResult({ type: 'error', text: result.error });
+    }
+  };
 
   // Reviews state
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
@@ -623,20 +645,51 @@ export default function GuideProfileClient({ guide, advices, reviews: initialRev
                 </div>
               )}
 
+              {/* Booking form — shown when a date is selected */}
+              {selectedDay && (
+                <div style={{ marginTop: 14, padding: 12, background: '#f8f9fa', borderRadius: 10, border: '1px solid #e8eaed' }}>
+                  <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 600, color: '#1a1a2e' }}>
+                    Message au guide (optionnel)
+                  </p>
+                  <textarea
+                    value={bookingMessage}
+                    onChange={e => setBookingMessage(e.target.value)}
+                    placeholder="Décrivez vos attentes, votre groupe..."
+                    rows={2}
+                    style={{
+                      width: '100%', padding: '8px 10px', borderRadius: 8, fontSize: 12,
+                      border: '1px solid #e0e0e0', resize: 'none', outline: 'none',
+                      fontFamily: 'inherit', boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Feedback */}
+              {bookingResult && (
+                <div style={{
+                  marginTop: 10, padding: '9px 12px', borderRadius: 8, fontSize: 12,
+                  background: bookingResult.type === 'success' ? '#e8f5e9' : '#ffebee',
+                  color: bookingResult.type === 'success' ? '#2e7d32' : '#c62828',
+                }}>
+                  {bookingResult.text}
+                </div>
+              )}
+
               <button
-                disabled={availableDates.length > 0 && !selectedDay}
+                onClick={selectedDay ? submitBooking : undefined}
+                disabled={(availableDates.length > 0 && !selectedDay) || bookingPending}
                 style={{
-                  width: '100%', marginTop: 16, padding: '13px 0', borderRadius: 10,
+                  width: '100%', marginTop: 12, padding: '13px 0', borderRadius: 10,
                   background: availableDates.length > 0 && !selectedDay ? '#c5d9f7' : '#1a73e8',
                   color: '#fff', fontWeight: 600, fontSize: 14,
-                  border: 'none', cursor: availableDates.length > 0 && !selectedDay ? 'default' : 'pointer',
+                  border: 'none', cursor: (availableDates.length > 0 && !selectedDay) || bookingPending ? 'default' : 'pointer',
                 }}
               >
-                {selectedDay
-                  ? `Réserver le ${selectedDay} ${MONTH_NAMES[calMonth]}`
-                  : availableDates.length > 0
-                    ? 'Sélectionnez une date'
-                    : 'Vérifier la disponibilité'}
+                {bookingPending ? 'Envoi en cours...'
+                  : selectedDay ? `Envoyer la demande — ${selectedDay} ${MONTH_NAMES[calMonth]}`
+                  : availableDates.length > 0 ? 'Sélectionnez une date disponible'
+                  : 'Aucune disponibilité renseignée'}
               </button>
             </div>
 
