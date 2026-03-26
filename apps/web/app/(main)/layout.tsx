@@ -20,9 +20,11 @@ export default async function MainLayout({ children }: { children: React.ReactNo
 
   return (
     <AuthProvider initialUser={user}>
-      <Header />
-      <main>{children}</main>
-      <Footer />
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <Header />
+        <main style={{ flex: 1 }}>{children}</main>
+        <Footer />
+      </div>
     </AuthProvider>
   );
 }
