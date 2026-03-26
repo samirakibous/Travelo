@@ -22,6 +22,7 @@ export type GuideProfile = {
   rating: number;
   reviewCount: number;
   isCertified: boolean;
+  availableDates: string[];
   createdAt: string;
 };
 

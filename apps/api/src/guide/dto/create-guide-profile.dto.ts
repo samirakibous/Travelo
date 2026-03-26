@@ -36,6 +36,11 @@ export class CreateGuideProfileDto {
   @Min(0)
   tripsCompleted?: number;
 
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  availableDates?: string[];
+
   @IsArray()
   @ArrayNotEmpty()
   @IsMongoId({ each: true })

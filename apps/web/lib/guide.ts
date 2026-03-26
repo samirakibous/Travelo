@@ -17,6 +17,7 @@ export type GuideProfilePayload = {
   specialties: string[]; // array of Specialty ObjectIds
   languages: string[];
   expertiseLevel: 'elite' | 'professional' | 'local';
+  availableDates: string[];
 };
 
 export async function createGuideProfile(

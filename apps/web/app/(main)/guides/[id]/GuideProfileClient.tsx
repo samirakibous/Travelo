@@ -76,7 +76,7 @@ type Props = {
 };
 
 export default function GuideProfileClient({ guide, advices, reviews: initialReviews, canReview }: Props) {
-  const { userId, bio, location, hourlyRate, yearsExperience, tripsCompleted, specialties, languages, expertiseLevel, rating, reviewCount, isCertified } = guide;
+  const { userId, bio, location, hourlyRate, yearsExperience, tripsCompleted, specialties, languages, expertiseLevel, rating, reviewCount, isCertified, availableDates } = guide;
   const fullName = `${userId.firstName} ${userId.lastName}`;
   const avatarSrc = userId.profilePicture ? `${API_URL}${userId.profilePicture}` : null;
   const initials = `${userId.firstName[0]}${userId.lastName[0]}`.toUpperCase();
@@ -576,19 +576,30 @@ export default function GuideProfileClient({ guide, advices, reviews: initialRev
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
                   {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
                   {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
+                    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const isToday = calYear === today.getFullYear() && calMonth === today.getMonth() && day === today.getDate();
                     const isSelected = selectedDay === day;
                     const isPast = new Date(calYear, calMonth, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                    const isAvailable = availableDates.includes(dateStr);
+                    const isDisabled = isPast || (!isAvailable && availableDates.length > 0);
                     return (
                       <button
                         key={day}
-                        onClick={() => !isPast && setSelectedDay(day)}
+                        onClick={() => !isDisabled && setSelectedDay(isSelected ? null : day)}
+                        title={isAvailable ? 'Disponible' : availableDates.length > 0 ? 'Non disponible' : undefined}
                         style={{
                           width: '100%', aspectRatio: '1', borderRadius: 6, border: 'none',
-                          cursor: isPast ? 'default' : 'pointer', fontSize: 12,
+                          cursor: isDisabled ? 'default' : 'pointer', fontSize: 12,
                           fontWeight: isToday ? 700 : 400,
-                          background: isSelected ? '#1a73e8' : isToday ? '#e8f0fe' : 'transparent',
-                          color: isSelected ? '#fff' : isPast ? '#ccc' : isToday ? '#1a73e8' : '#1a1a2e',
+                          background: isSelected ? '#1a73e8'
+                            : isAvailable ? '#e8f5e9'
+                            : isToday ? '#e8f0fe'
+                            : 'transparent',
+                          color: isSelected ? '#fff'
+                            : isDisabled ? '#ccc'
+                            : isAvailable ? '#2e7d32'
+                            : isToday ? '#1a73e8'
+                            : '#1a1a2e',
                         }}
                       >
                         {day}
@@ -598,12 +609,34 @@ export default function GuideProfileClient({ guide, advices, reviews: initialRev
                 </div>
               </div>
 
-              <button style={{
-                width: '100%', marginTop: 20, padding: '13px 0', borderRadius: 10,
-                background: '#1a73e8', color: '#fff', fontWeight: 600, fontSize: 14,
-                border: 'none', cursor: 'pointer',
-              }}>
-                Vérifier la disponibilité
+              {/* Légende */}
+              {availableDates.length > 0 && (
+                <div style={{ display: 'flex', gap: 12, marginTop: 12, fontSize: 11, color: '#666' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: 3, background: '#e8f5e9', border: '1px solid #a5d6a7' }} />
+                    Disponible
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: 3, background: '#1a73e8' }} />
+                    Sélectionné
+                  </div>
+                </div>
+              )}
+
+              <button
+                disabled={availableDates.length > 0 && !selectedDay}
+                style={{
+                  width: '100%', marginTop: 16, padding: '13px 0', borderRadius: 10,
+                  background: availableDates.length > 0 && !selectedDay ? '#c5d9f7' : '#1a73e8',
+                  color: '#fff', fontWeight: 600, fontSize: 14,
+                  border: 'none', cursor: availableDates.length > 0 && !selectedDay ? 'default' : 'pointer',
+                }}
+              >
+                {selectedDay
+                  ? `Réserver le ${selectedDay} ${MONTH_NAMES[calMonth]}`
+                  : availableDates.length > 0
+                    ? 'Sélectionnez une date'
+                    : 'Vérifier la disponibilité'}
               </button>
             </div>
 
