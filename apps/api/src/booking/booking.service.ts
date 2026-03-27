@@ -9,12 +9,14 @@ import { Model, Types } from 'mongoose';
 import { Booking, BookingDocument } from './entities/booking.entity';
 import { GuideProfile, GuideProfileDocument } from '../guide/entities/guide-profile.entity';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class BookingService {
   constructor(
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
     @InjectModel(GuideProfile.name) private guideModel: Model<GuideProfileDocument>,
+    private readonly notifService: NotificationService,
   ) {}
 
   // Tourist creates a booking request
@@ -43,6 +45,15 @@ export class BookingService {
       message: dto.message ?? '',
     });
     await booking.save();
+
+    // Notify the guide
+    await this.notifService.create({
+      userId: guide.userId.toString(),
+      type: 'new_booking',
+      title: 'Nouvelle demande de réservation',
+      body: `Un touriste souhaite vous réserver pour le ${dto.date}`,
+      link: '/dashboard/bookings',
+    });
 
     return booking
       .populate('touristId', 'firstName lastName profilePicture email')
@@ -107,6 +118,33 @@ export class BookingService {
 
     booking.status = status;
     await booking.save();
+
+    // Send notification
+    const guide = booking.guideId as any;
+    if (actor === 'guide') {
+      // Notify tourist
+      const LABELS: Record<string, string> = {
+        confirmed: 'confirmée',
+        rejected: 'refusée',
+      };
+      await this.notifService.create({
+        userId: booking.touristId.toString(),
+        type: status === 'confirmed' ? 'booking_confirmed' : 'booking_rejected',
+        title: `Réservation ${LABELS[status] ?? status}`,
+        body: `Votre réservation a été ${LABELS[status] ?? status} par le guide`,
+        link: '/dashboard/bookings',
+      });
+    } else {
+      // Notify guide
+      await this.notifService.create({
+        userId: guide.userId.toString(),
+        type: 'booking_cancelled',
+        title: 'Réservation annulée',
+        body: 'Un touriste a annulé sa réservation',
+        link: '/dashboard/bookings',
+      });
+    }
+
     return booking;
   }
 }

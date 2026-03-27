@@ -19,6 +19,7 @@ import { MessagingModule } from './messaging/messaging.module';
 import { SosModule } from './sos/sos.module';
 import { CommentModule } from './comment/comment.module';
 import { StatsModule } from './stats/stats.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { StatsModule } from './stats/stats.module';
     SosModule,
     CommentModule,
     StatsModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
