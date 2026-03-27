@@ -33,7 +33,7 @@ function Avatar({ src, initials, size = 36 }: { src: string | null; initials: st
 
 function formatDate(dateStr: string) {
   const [y, m, d] = dateStr.split('-').map(Number);
-  return `${d} ${MONTH_NAMES[m - 1]} ${y}`;
+  return `${d} ${m != null ? MONTH_NAMES[m - 1] : ''} ${y}`;
 }
 
 type Props = {
@@ -138,7 +138,7 @@ function BookingCard({
             onClick={() => onCancel?.(booking._id)}
             style={{
               display: 'flex', alignItems: 'center', gap: 5,
-              padding: '7px 14px', borderRadius: 8, border: 'none',
+              padding: '7px 14px', borderRadius: 8,
               background: '#f9fafb', color: '#6b7280', fontWeight: 600,
               fontSize: 12, cursor: 'pointer', border: '1px solid #e5e7eb',
             } as React.CSSProperties}
