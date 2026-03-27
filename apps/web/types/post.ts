@@ -14,6 +14,7 @@ export type Post = {
   destination: string;
   category: Category;
   author: PostAuthor;
+  mediaUrls: string[];
   upvotes: string[];
   downvotes: string[];
   reports: { user: string; reason: string; createdAt: string }[];

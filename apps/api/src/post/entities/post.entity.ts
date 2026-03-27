@@ -26,6 +26,9 @@ export class Post {
   @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
   downvotes!: Types.ObjectId[];
 
+  @Prop({ type: [String], default: [] })
+  mediaUrls!: string[];
+
   @Prop({
     type: [
       {
