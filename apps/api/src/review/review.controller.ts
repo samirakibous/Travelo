@@ -10,6 +10,7 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Request as ExpressRequest } from 'express';
 import { ReviewService } from './review.service';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -19,15 +20,22 @@ interface AuthRequest extends ExpressRequest {
   user: { id: string; role: string };
 }
 
+@ApiTags('Reviews')
 @Controller('guides/:guideId/reviews')
 export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 
+  @ApiOperation({ summary: 'Lister les avis d\'un guide' })
+  @ApiResponse({ status: 200, description: 'Liste des avis' })
   @Get()
   findAll(@Param('guideId') guideId: string) {
     return this.reviewService.findByGuide(guideId);
   }
 
+  @ApiOperation({ summary: 'Laisser un avis sur un guide' })
+  @ApiBearerAuth('JWT')
+  @ApiResponse({ status: 201, description: 'Avis créé' })
+  @ApiResponse({ status: 403, description: 'Non autorisé (doit être un touriste)' })
   @Post()
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
@@ -39,6 +47,10 @@ export class ReviewController {
     return this.reviewService.create(req.user.id, req.user.role, guideId, dto);
   }
 
+  @ApiOperation({ summary: 'Supprimer un avis' })
+  @ApiBearerAuth('JWT')
+  @ApiResponse({ status: 200, description: 'Avis supprimé' })
+  @ApiResponse({ status: 403, description: 'Non autorisé' })
   @Delete(':reviewId')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)

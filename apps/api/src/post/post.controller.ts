@@ -15,6 +15,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { Request as ExpressRequest } from 'express';
 import { diskStorage } from 'multer';
@@ -46,15 +47,24 @@ const mediaStorage = diskStorage({
 
 const ALLOWED_MIMETYPES = /^(image\/(jpeg|png|webp)|video\/(mp4|quicktime|webm))$/;
 
+@ApiTags('Posts')
 @Controller('posts')
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
+  @ApiOperation({ summary: 'Lister les publications' })
+  @ApiResponse({ status: 200, description: 'Liste paginée des publications' })
   @Get()
   findAll(@Query() query: QueryPostDto) {
     return this.postService.findAll(query);
   }
 
+  @ApiOperation({ summary: 'Créer une publication' })
+  @ApiBearerAuth('JWT')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ schema: { type: 'object', properties: { title: { type: 'string' }, description: { type: 'string' }, destination: { type: 'string' }, category: { type: 'string' }, media: { type: 'array', items: { type: 'string', format: 'binary' } } } } })
+  @ApiResponse({ status: 201, description: 'Publication créée' })
+  @ApiResponse({ status: 401, description: 'Non authentifié' })
   @UseGuards(JwtAuthGuard)
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -79,6 +89,10 @@ export class PostController {
     return this.postService.create(createPostDto, req.user.id, mediaUrls);
   }
 
+  @ApiOperation({ summary: 'Modifier une publication' })
+  @ApiBearerAuth('JWT')
+  @ApiResponse({ status: 200, description: 'Publication mise à jour' })
+  @ApiResponse({ status: 403, description: 'Non autorisé' })
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
@@ -90,6 +104,10 @@ export class PostController {
     return this.postService.update(id, req.user.id, dto);
   }
 
+  @ApiOperation({ summary: 'Supprimer une publication' })
+  @ApiBearerAuth('JWT')
+  @ApiResponse({ status: 200, description: 'Publication supprimée' })
+  @ApiResponse({ status: 403, description: 'Non autorisé' })
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
@@ -97,6 +115,9 @@ export class PostController {
     return this.postService.remove(id, req.user.id, req.user.role);
   }
 
+  @ApiOperation({ summary: 'Voter pour une publication' })
+  @ApiBearerAuth('JWT')
+  @ApiResponse({ status: 200, description: 'Vote enregistré' })
   @UseGuards(JwtAuthGuard)
   @Post(':id/vote')
   @HttpCode(HttpStatus.OK)
@@ -104,6 +125,9 @@ export class PostController {
     return this.postService.vote(id, req.user.id, dto.type);
   }
 
+  @ApiOperation({ summary: 'Signaler une publication' })
+  @ApiBearerAuth('JWT')
+  @ApiResponse({ status: 200, description: 'Signalement enregistré' })
   @UseGuards(JwtAuthGuard)
   @Post(':id/report')
   @HttpCode(HttpStatus.OK)

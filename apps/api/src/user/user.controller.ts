@@ -14,6 +14,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request as ExpressRequest } from 'express';
 import { diskStorage } from 'multer';
@@ -40,16 +41,24 @@ const avatarStorage = diskStorage({
   },
 });
 
+@ApiTags('Users')
+@ApiBearerAuth('JWT')
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @ApiOperation({ summary: 'Obtenir mon profil' })
+  @ApiResponse({ status: 200, description: 'Profil de l\'utilisateur connecté' })
+  @ApiResponse({ status: 401, description: 'Non authentifié' })
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getProfile(@Request() req: AuthRequest) {
     return this.userService.getProfile(req.user.id);
   }
 
+  @ApiOperation({ summary: 'Mettre à jour mon profil' })
+  @ApiResponse({ status: 200, description: 'Profil mis à jour' })
+  @ApiResponse({ status: 401, description: 'Non authentifié' })
   @UseGuards(JwtAuthGuard)
   @Patch('me')
   @HttpCode(HttpStatus.OK)
@@ -57,6 +66,10 @@ export class UserController {
     return this.userService.updateProfile(req.user.id, dto);
   }
 
+  @ApiOperation({ summary: 'Changer mon mot de passe' })
+  @ApiResponse({ status: 200, description: 'Mot de passe modifié' })
+  @ApiResponse({ status: 400, description: 'Mot de passe actuel incorrect' })
+  @ApiResponse({ status: 401, description: 'Non authentifié' })
   @UseGuards(JwtAuthGuard)
   @Patch('me/password')
   @HttpCode(HttpStatus.OK)
@@ -64,6 +77,11 @@ export class UserController {
     return this.userService.changePassword(req.user.id, dto);
   }
 
+  @ApiOperation({ summary: 'Uploader mon avatar' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ schema: { type: 'object', properties: { avatar: { type: 'string', format: 'binary' } } } })
+  @ApiResponse({ status: 200, description: 'Avatar mis à jour' })
+  @ApiResponse({ status: 400, description: 'Fichier invalide' })
   @UseGuards(JwtAuthGuard)
   @Post('me/avatar')
   @HttpCode(HttpStatus.OK)
@@ -90,12 +108,16 @@ export class UserController {
     return this.userService.updateAvatar(req.user.id, `/uploads/avatars/${file.filename}`);
   }
 
+  @ApiOperation({ summary: 'Obtenir mes guides sauvegardés' })
+  @ApiResponse({ status: 200, description: 'Liste des IDs de guides sauvegardés' })
   @UseGuards(JwtAuthGuard)
   @Get('me/saved-guides')
   getSavedGuideIds(@Request() req: AuthRequest) {
     return this.userService.getSavedGuideIds(req.user.id);
   }
 
+  @ApiOperation({ summary: 'Ajouter/retirer un guide des favoris' })
+  @ApiResponse({ status: 200, description: 'Favori basculé' })
   @UseGuards(JwtAuthGuard)
   @Post('me/saved-guides/:id')
   @HttpCode(HttpStatus.OK)
