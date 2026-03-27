@@ -1,117 +1,94 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { UserCircle, Lightbulb, ShieldAlert, CalendarDays, MessageCircle } from 'lucide-react';
-import { logout } from '../../../lib/auth';
+import {
+  Map, Users, MessageCircle,
+  CalendarDays, Lightbulb, Star, ShieldAlert,
+} from 'lucide-react';
 import { getUser } from '../../../lib/getUser';
+
+type Card = { href: string; icon: React.ElementType; color: string; bg: string; title: string; desc: string };
+
+const CARDS: Record<string, Card[]> = {
+  tourist: [
+    { href: '/map',               icon: Map,           color: '#1a73e8', bg: '#e8f0fe', title: 'Safety Map',      desc: 'Visualisez les zones à risque en temps réel' },
+    { href: '/guides',            icon: Users,         color: '#9333ea', bg: '#f5f3ff', title: 'Trouver un guide', desc: 'Réservez un guide local certifié' },
+    { href: '/dashboard/bookings',icon: CalendarDays,  color: '#0891b2', bg: '#e0f2fe', title: 'Réservations',    desc: 'Suivez l\'état de vos demandes' },
+    { href: '/dashboard/messages',icon: MessageCircle, color: '#16a34a', bg: '#dcfce7', title: 'Messages',        desc: 'Discutez avec votre guide' },
+  ],
+  guide: [
+    { href: '/dashboard/bookings',      icon: CalendarDays, color: '#1a73e8', bg: '#e8f0fe', title: 'Réservations',    desc: 'Acceptez ou refusez les demandes' },
+    { href: '/dashboard/messages',      icon: MessageCircle,color: '#16a34a', bg: '#dcfce7', title: 'Messages',        desc: 'Échangez avec vos touristes' },
+    { href: '/dashboard/advice',        icon: Lightbulb,    color: '#d97706', bg: '#fef3c7', title: 'Mes conseils',    desc: 'Publiez des conseils géolocalisés' },
+    { href: '/dashboard/guide-profile', icon: Star,         color: '#9333ea', bg: '#f5f3ff', title: 'Profil guide',   desc: 'Complétez votre profil public' },
+  ],
+  admin: [
+    { href: '/admin', icon: ShieldAlert, color: '#dc2626', bg: '#fee2e2', title: 'Administration', desc: 'Modération et gestion de la plateforme' },
+  ],
+};
+
+const ROLE_LABEL: Record<string, string> = {
+  tourist: 'Touriste',
+  guide:   'Guide certifié',
+  admin:   'Administrateur',
+};
+
+const ROLE_DESC: Record<string, string> = {
+  tourist: 'Explorez la carte de sécurité, réservez un guide local et rejoignez la communauté.',
+  guide:   'Gérez vos réservations, publiez des conseils de sécurité et échangez avec vos touristes.',
+  admin:   'Supervisez la plateforme, modérez les contenus et gérez les utilisateurs.',
+};
 
 export default async function DashboardPage() {
   const user = await getUser();
-
   if (!user) redirect('/login');
 
+  const cards = CARDS[user.role] ?? CARDS.tourist ?? [];
+
   return (
-    <div className="min-h-screen p-8 bg-[#f8f9ff]">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-extrabold text-[#1a1a2e]">Bienvenue, {user.firstName}</h1>
-          <form
-            action={async () => {
-              'use server';
-              await logout();
-              redirect('/login');
+    <div style={{ maxWidth: 800 }}>
+      {/* Welcome banner */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1a73e8 0%, #9333ea 100%)',
+        borderRadius: 16, padding: '28px 32px', marginBottom: 28,
+      }}>
+        <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.75)', letterSpacing: '0.07em', textTransform: 'uppercase', margin: '0 0 6px' }}>
+          {ROLE_LABEL[user.role] ?? user.role}
+        </p>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#fff', margin: '0 0 8px' }}>
+          Bonjour, {user.firstName} !
+        </h1>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', margin: 0, lineHeight: 1.6 }}>
+          {ROLE_DESC[user.role]}
+        </p>
+      </div>
+
+      {/* Quick access cards */}
+      <p style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 14 }}>
+        Accès rapide
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 14 }}>
+        {cards.map(({ href, icon: Icon, color, bg, title, desc }) => (
+          <Link
+            key={href}
+            href={href}
+            style={{
+              display: 'block', padding: '18px 16px',
+              background: '#fff', borderRadius: 14,
+              border: '1px solid #f1f3f4', textDecoration: 'none',
+              transition: 'box-shadow 0.15s',
             }}
           >
-            <button
-              type="submit"
-              className="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold text-sm hover:bg-red-600 transition-colors cursor-pointer border-none"
-            >
-              Déconnexion
-            </button>
-          </form>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm p-6 space-y-3 mb-6">
-          <p className="text-sm"><span className="font-semibold text-[#374151]">Nom :</span> {user.firstName} {user.lastName}</p>
-          <p className="text-sm"><span className="font-semibold text-[#374151]">Email :</span> {user.email}</p>
-          <p className="text-sm"><span className="font-semibold text-[#374151]">Rôle :</span> <span className="capitalize">{user.role}</span></p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Link
-            href="/dashboard/profile"
-            className="flex items-center gap-4 bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow"
-          >
-            <div className="w-10 h-10 rounded-xl bg-[#e8f0fe] flex items-center justify-center shrink-0">
-              <UserCircle size={20} color="#1a73e8" />
+            <div style={{
+              width: 38, height: 38, borderRadius: 10,
+              background: bg, display: 'flex', alignItems: 'center',
+              justifyContent: 'center', marginBottom: 12,
+            }}>
+              <Icon size={18} color={color} />
             </div>
-            <div>
-              <p className="font-semibold text-[#1a1a2e] text-sm">Mon profil</p>
-              <p className="text-xs text-gray-500 mt-0.5">Modifier mes informations personnelles</p>
-            </div>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#1a1a2e', margin: '0 0 4px' }}>{title}</p>
+            <p style={{ fontSize: 11, color: '#9ca3af', margin: 0, lineHeight: 1.4 }}>{desc}</p>
           </Link>
-
-          {(user.role === 'tourist' || user.role === 'guide') && (
-            <Link
-              href="/dashboard/bookings"
-              className="flex items-center gap-4 bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow"
-            >
-              <div className="w-10 h-10 rounded-xl bg-[#e8f0fe] flex items-center justify-center shrink-0">
-                <CalendarDays size={20} color="#1a73e8" />
-              </div>
-              <div>
-                <p className="font-semibold text-[#1a1a2e] text-sm">Réservations</p>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {user.role === 'guide' ? 'Gérer les demandes de réservation' : 'Voir mes réservations'}
-                </p>
-              </div>
-            </Link>
-          )}
-
-          {user.role === 'guide' && (
-            <Link
-              href="/dashboard/advice"
-              className="flex items-center gap-4 bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow"
-            >
-              <div className="w-10 h-10 rounded-xl bg-[#e8f0fe] flex items-center justify-center shrink-0">
-                <Lightbulb size={20} color="#1a73e8" />
-              </div>
-              <div>
-                <p className="font-semibold text-[#1a1a2e] text-sm">Mes conseils</p>
-                <p className="text-xs text-gray-500 mt-0.5">Publier des conseils de sécurité géolocalisés</p>
-              </div>
-            </Link>
-          )}
-
-          {(user.role === 'tourist' || user.role === 'guide') && (
-            <Link
-              href="/dashboard/messages"
-              className="flex items-center gap-4 bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow"
-            >
-              <div className="w-10 h-10 rounded-xl bg-[#e8f0fe] flex items-center justify-center shrink-0">
-                <MessageCircle size={20} color="#1a73e8" />
-              </div>
-              <div>
-                <p className="font-semibold text-[#1a1a2e] text-sm">Messages</p>
-                <p className="text-xs text-gray-500 mt-0.5">Discuter avec votre guide ou vos touristes</p>
-              </div>
-            </Link>
-          )}
-
-          {user.role === 'admin' && (
-            <Link
-              href="/admin"
-              className="flex items-center gap-4 bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow"
-            >
-              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
-                <ShieldAlert size={20} color="#dc2626" />
-              </div>
-              <div>
-                <p className="font-semibold text-[#1a1a2e] text-sm">Administration</p>
-                <p className="text-xs text-gray-500 mt-0.5">Modération et gestion de la plateforme</p>
-              </div>
-            </Link>
-          )}
-        </div>
+        ))}
       </div>
     </div>
   );

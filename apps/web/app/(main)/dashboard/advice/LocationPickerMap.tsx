@@ -30,14 +30,17 @@ function MapResizer() {
 function GeolocationController({ onLocated }: { onLocated: (c: Coords) => void }) {
   const map = useMap();
   useEffect(() => {
+    let cancelled = false;
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
+        if (cancelled) return;
         const c = { lat: coords.latitude, lng: coords.longitude };
         map.setView([c.lat, c.lng], 13);
         onLocated(c);
       },
       () => {},
     );
+    return () => { cancelled = true; };
   }, [map, onLocated]);
   return null;
 }
