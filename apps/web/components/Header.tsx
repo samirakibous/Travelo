@@ -1,21 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { Shield, Map, Users, Bell, UserCircle, LogOut } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Shield, Map, Users, UserCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { logout } from '../lib/auth';
 import NotificationBell from './NotificationBell';
 
-export default function Header() {
-  const { user, setUser } = useAuth();
-  const router = useRouter();
+const STATIC_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:3000';
 
-  const handleLogout = async () => {
-    await logout();
-    setUser(null);
-    router.push('/login');
-  };
+export default function Header() {
+  const { user } = useAuth();
 
   return (
     <header className="flex items-center justify-between px-16 h-16 bg-white shadow-sm sticky top-0 z-[100]">
@@ -28,9 +21,7 @@ export default function Header() {
         {[
           { href: '/map', icon: <Map size={16} />, label: 'Safety Map' },
           { href: '/guides', icon: <Users size={16} />, label: 'Guides' },
-          { href: '#', icon: <Bell size={16} />, label: 'Alerts' },
           { href: '/community', label: 'Communauté' },
-          { href: '#', label: 'Pricing' },
         ].map((item) => (
           <Link
             key={item.label}
@@ -44,7 +35,7 @@ export default function Header() {
       </nav>
 
       <div className="flex items-center gap-2.5">
-        {user ? (
+{user ? (
           <>
             {(user.role === 'tourist' || user.role === 'guide') && (
               <NotificationBell />
@@ -53,16 +44,17 @@ export default function Header() {
               href="/dashboard/profile"
               className="flex items-center gap-2 px-4 py-2 bg-[#f1f5f9] rounded-lg text-sm font-semibold text-[#1a1a2e] hover:bg-[#e2e8f0] transition-colors"
             >
-              <UserCircle size={18} color="#1a73e8" />
+              {user.profilePicture ? (
+                <img
+                  src={`${STATIC_URL}${user.profilePicture}`}
+                  alt={user.firstName}
+                  style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                />
+              ) : (
+                <UserCircle size={18} color="#1a73e8" />
+              )}
               {user.firstName}
             </Link>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium text-[#e53e3e] hover:bg-red-50 transition-colors"
-            >
-              <LogOut size={16} />
-              Déconnexion
-            </button>
           </>
         ) : (
           <>
