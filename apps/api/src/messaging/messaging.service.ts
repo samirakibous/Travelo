@@ -3,12 +3,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Conversation, ConversationDocument } from './entities/conversation.entity';
 import { Message, MessageDocument } from './entities/message.entity';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class MessagingService {
   constructor(
     @InjectModel(Conversation.name) private conversationModel: Model<ConversationDocument>,
     @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
+    private readonly notifService: NotificationService,
   ) {}
 
   async findOrCreate(userId: string, participantId: string) {
@@ -69,10 +71,27 @@ export class MessagingService {
     (conv as any).updatedAt = new Date();
     await conv.save();
 
-    return this.messageModel
+    const populated = await this.messageModel
       .findById(msg._id)
       .populate('sender', 'firstName lastName profilePicture')
       .lean();
+
+    // Notify the other participant (fire-and-forget, must not break message delivery)
+    const recipientId = this.getRecipientId(conv, senderId);
+    console.log('[Notif] recipientId:', recipientId, '| populated:', !!populated);
+    if (recipientId && populated) {
+      const sender = (populated as any).sender;
+      const senderName = sender ? `${sender.firstName} ${sender.lastName}` : 'Quelqu\'un';
+      this.notifService.create({
+        userId: recipientId,
+        type: 'new_message',
+        title: 'Nouveau message',
+        body: `${senderName} vous a envoyé un message`,
+        link: `/dashboard/messages/${conversationId}`,
+      }).catch((err) => console.error('[NotifError] message notif failed:', err?.message));
+    }
+
+    return populated;
   }
 
   async markAsRead(conversationId: string, userId: string) {

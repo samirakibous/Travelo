@@ -1,28 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { Shield, Map, Users, Bell, UserCircle, LogOut, MessageCircle } from 'lucide-react';
+import { Shield, Map, Users, Bell, UserCircle, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { logout } from '../lib/auth';
-import { getUnreadCount } from '../lib/messaging';
+import NotificationBell from './NotificationBell';
 
 export default function Header() {
   const { user, setUser } = useAuth();
   const router = useRouter();
-  const [unread, setUnread] = useState(0);
-
-  useEffect(() => {
-    if (!user || (user.role !== 'tourist' && user.role !== 'guide')) return;
-    const fetchCount = async () => {
-      const count = await getUnreadCount();
-      setUnread(count);
-    };
-    fetchCount();
-    const interval = setInterval(fetchCount, 30000);
-    return () => clearInterval(interval);
-  }, [user]);
 
   const handleLogout = async () => {
     await logout();
@@ -60,17 +47,7 @@ export default function Header() {
         {user ? (
           <>
             {(user.role === 'tourist' || user.role === 'guide') && (
-              <Link
-                href="/dashboard/messages"
-                className="relative flex items-center justify-center w-9 h-9 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors"
-              >
-                <MessageCircle size={18} />
-                {unread > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#1a73e8] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {unread > 9 ? '9+' : unread}
-                  </span>
-                )}
-              </Link>
+              <NotificationBell />
             )}
             <Link
               href="/dashboard/profile"
