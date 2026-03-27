@@ -4,7 +4,21 @@ import {
   MapPin, Shield, BookOpen, Navigation, Star, ArrowRight,
 } from 'lucide-react';
 
-export default function HomePage() {
+async function getStats() {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/stats`,
+      { next: { revalidate: 300 } },
+    );
+    if (!res.ok) return null;
+    return res.json() as Promise<{ users: number; guides: number; posts: number; advices: number }>;
+  } catch {
+    return null;
+  }
+}
+
+export default async function HomePage() {
+  const stats = await getStats();
   return (
     <div className="font-sans text-[#1a1a2e]">
 
@@ -34,6 +48,27 @@ export default function HomePage() {
           </button>
         </div>
       </section>
+
+      {/* Stats strip */}
+      {stats && (
+        <section className="py-10 px-16 bg-white border-b border-gray-100">
+          <div className="max-w-[900px] mx-auto grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
+            {[
+              { value: stats.users, label: 'Voyageurs', suffix: '+' },
+              { value: stats.guides, label: 'Guides certifiés', suffix: '' },
+              { value: stats.posts, label: 'Posts communauté', suffix: '' },
+              { value: stats.advices, label: 'Conseils de sécurité', suffix: '' },
+            ].map((s) => (
+              <div key={s.label}>
+                <p className="text-3xl font-extrabold text-[#1a73e8]">
+                  {s.value.toLocaleString('fr-FR')}{s.suffix}
+                </p>
+                <p className="text-sm text-gray-500 mt-1">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Securing Every Step */}
       <section className="py-20 px-16 text-center bg-[#f8f9ff]" id="features">

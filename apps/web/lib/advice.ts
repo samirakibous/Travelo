@@ -55,3 +55,16 @@ export async function getMyAdvices(): Promise<Advice[]> {
     return [];
   }
 }
+
+export async function voteAdvice(
+  adviceId: string,
+  type: 'useful' | 'not_useful',
+): Promise<ActionResult<{ usefulVotes: number; notUsefulVotes: number; userVote: 'useful' | 'not_useful' | null }>> {
+  try {
+    const authApi = await getAuthApi();
+    const { data } = await authApi.patch(`/advices/${adviceId}/vote`, { type });
+    return { success: true, data };
+  } catch (error) {
+    return { success: false, error: parseApiError(error) };
+  }
+}
