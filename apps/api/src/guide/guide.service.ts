@@ -71,17 +71,18 @@ export class GuideService {
     if (userRole !== Role.GUIDE) {
       throw new ForbiddenException('Seuls les guides peuvent créer un profil guide');
     }
-    const existing = await this.guideModel.findOne({ userId });
+    const userOid = new Types.ObjectId(userId);
+    const existing = await this.guideModel.findOne({ userId: userOid });
     if (existing) throw new ConflictException('Profil guide déjà existant');
 
-    const profile = new this.guideModel({ ...dto, userId });
+    const profile = new this.guideModel({ ...dto, userId: userOid });
     await profile.save();
     return profile.populate(['userId', 'specialties']);
   }
 
   async updateProfile(userId: string, dto: Partial<CreateGuideProfileDto>) {
     const profile = await this.guideModel
-      .findOneAndUpdate({ userId }, dto, { new: true })
+      .findOneAndUpdate({ userId: new Types.ObjectId(userId) }, dto, { new: true })
       .populate('userId', 'firstName lastName profilePicture email')
       .populate('specialties');
     if (!profile) throw new NotFoundException('Profil guide introuvable');
@@ -90,7 +91,7 @@ export class GuideService {
 
   async getMyProfile(userId: string) {
     const profile = await this.guideModel
-      .findOne({ userId })
+      .findOne({ userId: new Types.ObjectId(userId) })
       .populate('userId', 'firstName lastName profilePicture email')
       .populate('specialties');
     if (!profile) throw new NotFoundException('Profil guide introuvable');

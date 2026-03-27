@@ -8,7 +8,6 @@ import {
   BadgeCheck,
   ChevronLeft,
   ChevronRight,
-  Send,
   Globe,
   Shield,
   AlertTriangle,
@@ -24,6 +23,12 @@ import {
 } from 'lucide-react';
 import type { GuideProfile } from '../../../../types/guide';
 import type { Advice, AdviceCategory } from '../../../../types/advice';
+import type { Review } from '../../../../types/review';
+import { createReview } from '../../../../lib/review';
+import { createBooking } from '../../../../lib/booking';
+import { findOrCreateConversation } from '../../../../lib/messaging';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../../../contexts/AuthContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:3000';
 
@@ -69,25 +74,57 @@ function buildCalendar(year: number, month: number) {
 type Props = {
   guide: GuideProfile;
   advices: Advice[];
+  reviews: Review[];
+  canReview: boolean;
 };
 
-export default function GuideProfileClient({ guide, advices }: Props) {
-  const { userId, bio, location, hourlyRate, specialties, languages, expertiseLevel, rating, reviewCount, isCertified } = guide;
+export default function GuideProfileClient({ guide, advices, reviews: initialReviews, canReview }: Props) {
+  const { userId, bio, location, hourlyRate, yearsExperience, tripsCompleted, specialties, languages, expertiseLevel, rating, reviewCount, isCertified, availableDates } = guide;
   const fullName = `${userId.firstName} ${userId.lastName}`;
   const avatarSrc = userId.profilePicture ? `${API_URL}${userId.profilePicture}` : null;
   const initials = `${userId.firstName[0]}${userId.lastName[0]}`.toUpperCase();
   const badgeLabel = EXPERTISE_LABELS[expertiseLevel] ?? expertiseLevel.toUpperCase();
   const badgeColor = EXPERTISE_COLORS[expertiseLevel] ?? '#1a73e8';
 
+  const router = useRouter();
+  const { user: currentUser } = useAuth();
+
   const today = new Date();
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
-  const [chatMessage, setChatMessage] = useState('');
-  const [chatMessages, setChatMessages] = useState<{ from: 'user' | 'guide'; text: string }[]>([
-    { from: 'guide', text: `Bonjour ! Je suis disponible pour vous guider à ${location}. Comment puis-je vous aider ?` },
-  ]);
+  const [contactPending, setContactPending] = useState(false);
   const [expandedAdvice, setExpandedAdvice] = useState<string | null>(null);
+
+  // Booking state
+  const [bookingMessage, setBookingMessage] = useState('');
+  const [bookingPending, setBookingPending] = useState(false);
+  const [bookingResult, setBookingResult] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const submitBooking = async () => {
+    if (!selectedDay) return;
+    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+    setBookingPending(true);
+    setBookingResult(null);
+    const result = await createBooking(guide._id, { date: dateStr, message: bookingMessage });
+    setBookingPending(false);
+    if (result.success) {
+      setBookingResult({ type: 'success', text: 'Demande envoyée ! Le guide vous répondra bientôt.' });
+      setSelectedDay(null);
+      setBookingMessage('');
+    } else {
+      setBookingResult({ type: 'error', text: result.error });
+    }
+  };
+
+  // Reviews state
+  const [reviews, setReviews] = useState<Review[]>(initialReviews);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewHover, setReviewHover] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewError, setReviewError] = useState('');
+  const [reviewPending, setReviewPending] = useState(false);
 
   const { firstDay, daysInMonth } = buildCalendar(calYear, calMonth);
 
@@ -100,17 +137,30 @@ export default function GuideProfileClient({ guide, advices }: Props) {
     else setCalMonth(m => m + 1);
   };
 
-  const sendMessage = () => {
-    if (!chatMessage.trim()) return;
-    setChatMessages(prev => [...prev, { from: 'user', text: chatMessage }]);
-    setChatMessage('');
-    setTimeout(() => {
-      setChatMessages(prev => [...prev, { from: 'guide', text: 'Merci pour votre message ! Je vous répondrai dès que possible.' }]);
-    }, 800);
+  const handleContact = async () => {
+    if (!currentUser) { router.push('/login'); return; }
+    setContactPending(true);
+    const result = await findOrCreateConversation(userId._id);
+    setContactPending(false);
+    if (result.success) {
+      router.push(`/dashboard/messages/${result.data._id}`);
+    }
   };
 
-  const tripsCompleted = Math.max(reviewCount * 4, 12);
-  const yearsExperience = Math.max(Math.floor((guide._id.charCodeAt(0) % 12) + 3), 3);
+  const submitReview = async () => {
+    if (reviewRating === 0) { setReviewError('Veuillez choisir une note'); return; }
+    if (!reviewComment.trim()) { setReviewError('Veuillez écrire un commentaire'); return; }
+    setReviewError('');
+    setReviewPending(true);
+    const result = await createReview(guide._id, { rating: reviewRating, comment: reviewComment });
+    setReviewPending(false);
+    if (!result.success) { setReviewError(result.error); return; }
+    setReviews(prev => [result.data, ...prev]);
+    setShowReviewForm(false);
+    setReviewRating(0);
+    setReviewComment('');
+  };
+
 
   // Map pins from real advices (only those with valid coords)
   const mapPins = advices.filter(a => a.lat && a.lng).slice(0, 8);
@@ -371,29 +421,138 @@ export default function GuideProfileClient({ guide, advices }: Props) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Star size={18} color="#f59e0b" fill="#f59e0b" />
                   <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#1a1a2e' }}>Expériences des voyageurs</h2>
+                  {reviews.length > 0 && (
+                    <span style={{ background: '#fff8e1', color: '#f59e0b', fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 20 }}>
+                      {reviews.length}
+                    </span>
+                  )}
                 </div>
+                {canReview && (
+                  <button
+                    onClick={() => setShowReviewForm(v => !v)}
+                    style={{
+                      fontSize: 12, color: '#1a73e8', background: showReviewForm ? '#e8f0fe' : 'none',
+                      border: '1px solid #1a73e8', borderRadius: 8, padding: '5px 12px',
+                      cursor: 'pointer', fontWeight: 500,
+                    }}
+                  >
+                    {showReviewForm ? 'Annuler' : 'Écrire un avis'}
+                  </button>
+                )}
               </div>
 
-              {reviewCount === 0 ? (
-                <div style={{ textAlign: 'center', padding: '32px 0', color: '#888' }}>
+              {/* Review form */}
+              {showReviewForm && (
+                <div style={{ background: '#f8f9fa', borderRadius: 10, padding: 16, marginBottom: 20, border: '1px solid #e8eaed' }}>
+                  <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 600, color: '#1a1a2e' }}>Votre note</p>
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <button
+                        key={i}
+                        onMouseEnter={() => setReviewHover(i)}
+                        onMouseLeave={() => setReviewHover(0)}
+                        onClick={() => setReviewRating(i)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}
+                      >
+                        <Star
+                          size={28}
+                          color="#f59e0b"
+                          fill={i <= (reviewHover || reviewRating) ? '#f59e0b' : 'none'}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reviewComment}
+                    onChange={e => setReviewComment(e.target.value)}
+                    placeholder="Décrivez votre expérience avec ce guide..."
+                    rows={3}
+                    style={{
+                      width: '100%', padding: '10px 12px', borderRadius: 8,
+                      border: '1px solid #e0e0e0', fontSize: 13, resize: 'vertical',
+                      outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box',
+                    }}
+                  />
+                  {reviewError && (
+                    <p style={{ margin: '6px 0 0', fontSize: 12, color: '#c62828' }}>{reviewError}</p>
+                  )}
+                  <button
+                    onClick={submitReview}
+                    disabled={reviewPending}
+                    style={{
+                      marginTop: 10, padding: '9px 20px', borderRadius: 8,
+                      background: reviewPending ? '#9db8e8' : '#1a73e8',
+                      color: '#fff', fontWeight: 600, fontSize: 13,
+                      border: 'none', cursor: reviewPending ? 'default' : 'pointer',
+                    }}
+                  >
+                    {reviewPending ? 'Publication...' : 'Publier'}
+                  </button>
+                </div>
+              )}
+
+              {/* Summary */}
+              {reviews.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                  <div style={{ display: 'flex', gap: 3 }}>
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <Star key={i} size={16} color="#f59e0b" fill={i <= Math.round(rating) ? '#f59e0b' : 'none'} />
+                    ))}
+                  </div>
+                  <span style={{ fontSize: 22, fontWeight: 700, color: '#1a1a2e' }}>{rating.toFixed(1)}</span>
+                  <span style={{ fontSize: 13, color: '#888' }}>({reviews.length} avis)</span>
+                </div>
+              )}
+
+              {/* Review list */}
+              {reviews.length === 0 && !showReviewForm ? (
+                <div style={{ textAlign: 'center', padding: '28px 0', color: '#888' }}>
                   <MessageCircle size={36} color="#ccc" style={{ marginBottom: 12 }} />
                   <p style={{ margin: 0, fontSize: 14, fontWeight: 500 }}>Aucun avis pour l'instant</p>
                   <p style={{ margin: '6px 0 0', fontSize: 13 }}>Soyez le premier à laisser un avis !</p>
                 </div>
               ) : (
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                    <div style={{ display: 'flex', gap: 3 }}>
-                      {[1, 2, 3, 4, 5].map(i => (
-                        <Star key={i} size={18} color="#f59e0b" fill={i <= Math.round(rating) ? '#f59e0b' : 'none'} />
-                      ))}
-                    </div>
-                    <span style={{ fontSize: 24, fontWeight: 700, color: '#1a1a2e' }}>{rating.toFixed(1)}</span>
-                    <span style={{ fontSize: 13, color: '#888' }}>({reviewCount} avis)</span>
-                  </div>
-                  <p style={{ margin: 0, fontSize: 13, color: '#888', fontStyle: 'italic' }}>
-                    Les avis détaillés seront disponibles prochainement.
-                  </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {reviews.map((review) => {
+                    const tourist = review.touristId;
+                    const avatarUrl = tourist.profilePicture ? `${API_URL}${tourist.profilePicture}` : null;
+                    const initials2 = `${tourist.firstName[0]}${tourist.lastName[0]}`.toUpperCase();
+                    const daysAgo = Math.floor((Date.now() - new Date(review.createdAt).getTime()) / 86400000);
+                    const timeLabel = daysAgo === 0 ? "Aujourd'hui" : daysAgo === 1 ? 'Il y a 1 jour' : `Il y a ${daysAgo} jours`;
+
+                    return (
+                      <div key={review._id} style={{ borderBottom: '1px solid #f1f3f4', paddingBottom: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                          {/* Avatar */}
+                          <div style={{
+                            width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
+                            background: '#e8f0fe', overflow: 'hidden',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            {avatarUrl ? (
+                              <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <span style={{ fontSize: 13, fontWeight: 700, color: '#1a73e8' }}>{initials2}</span>
+                            )}
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: '#1a1a2e' }}>
+                                {tourist.firstName} {tourist.lastName}
+                              </span>
+                              <span style={{ fontSize: 11, color: '#aaa' }}>{timeLabel}</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: 2, margin: '4px 0 6px' }}>
+                              {[1, 2, 3, 4, 5].map(i => (
+                                <Star key={i} size={12} color="#f59e0b" fill={i <= review.rating ? '#f59e0b' : 'none'} />
+                              ))}
+                            </div>
+                            <p style={{ margin: 0, fontSize: 13, color: '#555', lineHeight: 1.5 }}>{review.comment}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -442,19 +601,30 @@ export default function GuideProfileClient({ guide, advices }: Props) {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
                   {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
                   {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
+                    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const isToday = calYear === today.getFullYear() && calMonth === today.getMonth() && day === today.getDate();
                     const isSelected = selectedDay === day;
                     const isPast = new Date(calYear, calMonth, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                    const isAvailable = availableDates.includes(dateStr);
+                    const isDisabled = isPast || (!isAvailable && availableDates.length > 0);
                     return (
                       <button
                         key={day}
-                        onClick={() => !isPast && setSelectedDay(day)}
+                        onClick={() => !isDisabled && setSelectedDay(isSelected ? null : day)}
+                        title={isAvailable ? 'Disponible' : availableDates.length > 0 ? 'Non disponible' : undefined}
                         style={{
                           width: '100%', aspectRatio: '1', borderRadius: 6, border: 'none',
-                          cursor: isPast ? 'default' : 'pointer', fontSize: 12,
+                          cursor: isDisabled ? 'default' : 'pointer', fontSize: 12,
                           fontWeight: isToday ? 700 : 400,
-                          background: isSelected ? '#1a73e8' : isToday ? '#e8f0fe' : 'transparent',
-                          color: isSelected ? '#fff' : isPast ? '#ccc' : isToday ? '#1a73e8' : '#1a1a2e',
+                          background: isSelected ? '#1a73e8'
+                            : isAvailable ? '#e8f5e9'
+                            : isToday ? '#e8f0fe'
+                            : 'transparent',
+                          color: isSelected ? '#fff'
+                            : isDisabled ? '#ccc'
+                            : isAvailable ? '#2e7d32'
+                            : isToday ? '#1a73e8'
+                            : '#1a1a2e',
                         }}
                       >
                         {day}
@@ -464,55 +634,91 @@ export default function GuideProfileClient({ guide, advices }: Props) {
                 </div>
               </div>
 
-              <button style={{
-                width: '100%', marginTop: 20, padding: '13px 0', borderRadius: 10,
-                background: '#1a73e8', color: '#fff', fontWeight: 600, fontSize: 14,
-                border: 'none', cursor: 'pointer',
-              }}>
-                Vérifier la disponibilité
+              {/* Légende */}
+              {availableDates.length > 0 && (
+                <div style={{ display: 'flex', gap: 12, marginTop: 12, fontSize: 11, color: '#666' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: 3, background: '#e8f5e9', border: '1px solid #a5d6a7' }} />
+                    Disponible
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: 3, background: '#1a73e8' }} />
+                    Sélectionné
+                  </div>
+                </div>
+              )}
+
+              {/* Booking form — shown when a date is selected */}
+              {selectedDay && (
+                <div style={{ marginTop: 14, padding: 12, background: '#f8f9fa', borderRadius: 10, border: '1px solid #e8eaed' }}>
+                  <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 600, color: '#1a1a2e' }}>
+                    Message au guide (optionnel)
+                  </p>
+                  <textarea
+                    value={bookingMessage}
+                    onChange={e => setBookingMessage(e.target.value)}
+                    placeholder="Décrivez vos attentes, votre groupe..."
+                    rows={2}
+                    style={{
+                      width: '100%', padding: '8px 10px', borderRadius: 8, fontSize: 12,
+                      border: '1px solid #e0e0e0', resize: 'none', outline: 'none',
+                      fontFamily: 'inherit', boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Feedback */}
+              {bookingResult && (
+                <div style={{
+                  marginTop: 10, padding: '9px 12px', borderRadius: 8, fontSize: 12,
+                  background: bookingResult.type === 'success' ? '#e8f5e9' : '#ffebee',
+                  color: bookingResult.type === 'success' ? '#2e7d32' : '#c62828',
+                }}>
+                  {bookingResult.text}
+                </div>
+              )}
+
+              <button
+                onClick={selectedDay ? submitBooking : undefined}
+                disabled={(availableDates.length > 0 && !selectedDay) || bookingPending}
+                style={{
+                  width: '100%', marginTop: 12, padding: '13px 0', borderRadius: 10,
+                  background: availableDates.length > 0 && !selectedDay ? '#c5d9f7' : '#1a73e8',
+                  color: '#fff', fontWeight: 600, fontSize: 14,
+                  border: 'none', cursor: (availableDates.length > 0 && !selectedDay) || bookingPending ? 'default' : 'pointer',
+                }}
+              >
+                {bookingPending ? 'Envoi en cours...'
+                  : selectedDay ? `Envoyer la demande — ${selectedDay} ${MONTH_NAMES[calMonth]}`
+                  : availableDates.length > 0 ? 'Sélectionnez une date disponible'
+                  : 'Aucune disponibilité renseignée'}
               </button>
             </div>
 
-            {/* Chat */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e8eaed', overflow: 'hidden' }}>
-              <div style={{
-                padding: '14px 18px', borderBottom: '1px solid #f1f3f4',
-                display: 'flex', alignItems: 'center', gap: 8,
-              }}>
+            {/* Messagerie */}
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e8eaed', padding: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <MessageCircle size={16} color="#1a73e8" />
-                <span style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>Chat avec {userId.firstName}</span>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#2e7d32', marginLeft: 'auto' }} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e' }}>Contacter {userId.firstName}</span>
               </div>
-
-              <div style={{ padding: '14px 16px', minHeight: 140, maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {chatMessages.map((msg, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: msg.from === 'user' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{
-                      maxWidth: '80%', padding: '8px 12px', borderRadius: 12, fontSize: 12, lineHeight: 1.5,
-                      background: msg.from === 'user' ? '#1a73e8' : '#f1f3f4',
-                      color: msg.from === 'user' ? '#fff' : '#333',
-                      borderBottomRightRadius: msg.from === 'user' ? 2 : 12,
-                      borderBottomLeftRadius: msg.from === 'guide' ? 2 : 12,
-                    }}>
-                      {msg.text}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ padding: '10px 14px', borderTop: '1px solid #f1f3f4', display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input
-                  type="text"
-                  value={chatMessage}
-                  onChange={e => setChatMessage(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && sendMessage()}
-                  placeholder="Envoyer un message..."
-                  style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: '#1a1a2e', background: 'transparent' }}
-                />
-                <button onClick={sendMessage} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1a73e8', padding: 4 }}>
-                  <Send size={16} />
-                </button>
-              </div>
+              <p style={{ margin: '0 0 14px', fontSize: 13, color: '#6b7280', lineHeight: 1.5 }}>
+                Posez vos questions directement au guide avant de réserver.
+              </p>
+              <button
+                onClick={handleContact}
+                disabled={contactPending}
+                style={{
+                  width: '100%', padding: '11px 0', borderRadius: 10, border: 'none',
+                  background: contactPending ? '#9db8e8' : '#1a73e8',
+                  color: '#fff', fontWeight: 600, fontSize: 14,
+                  cursor: contactPending ? 'default' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                <MessageCircle size={16} />
+                {contactPending ? 'Ouverture...' : 'Envoyer un message'}
+              </button>
             </div>
           </div>
 

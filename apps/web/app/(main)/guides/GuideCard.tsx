@@ -1,7 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { MapPin, Star, Mail, BadgeCheck } from 'lucide-react';
+import { MapPin, Star, Mail, BadgeCheck, Heart } from 'lucide-react';
+import { useState } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
+import { toggleSavedGuide } from '../../../lib/favorites';
 import type { GuideProfile } from '../../../types/guide';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:3000';
@@ -14,13 +17,27 @@ const EXPERTISE_LABELS: Record<string, string> = {
 
 type Props = {
   guide: GuideProfile;
+  isSaved?: boolean;
+  onSaveToggle?: (id: string, saved: boolean) => void;
 };
 
-export default function GuideCard({ guide }: Props) {
+export default function GuideCard({ guide, isSaved = false, onSaveToggle }: Props) {
+  const { user } = useAuth();
   const { userId, bio, location, hourlyRate, specialties, rating, reviewCount, isCertified } = guide;
   const fullName = `${userId.firstName} ${userId.lastName}`;
   const avatarSrc = userId.profilePicture ? `${API_URL}${userId.profilePicture}` : null;
   const initials = `${userId.firstName[0]}${userId.lastName[0]}`.toUpperCase();
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user || saving) return;
+    setSaving(true);
+    const result = await toggleSavedGuide(guide._id);
+    setSaving(false);
+    if (result.success) onSaveToggle?.(guide._id, result.data.saved);
+  };
 
   return (
     <Link href={`/guides/${guide._id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'contents' }}>
@@ -40,6 +57,20 @@ export default function GuideCard({ guide }: Props) {
             <BadgeCheck size={12} />
             CERTIFIÉ
           </div>
+        )}
+
+        {user && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="absolute top-3 left-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors"
+          >
+            <Heart
+              size={15}
+              color={isSaved ? '#e53e3e' : '#6b7280'}
+              fill={isSaved ? '#e53e3e' : 'none'}
+            />
+          </button>
         )}
 
         <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur-sm">

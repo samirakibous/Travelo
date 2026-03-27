@@ -14,12 +14,15 @@ export type GuideProfile = {
   bio: string;
   location: string;
   hourlyRate: number;
+  yearsExperience: number;
+  tripsCompleted: number;
   specialties: Specialty[];
   languages: string[];
   expertiseLevel: ExpertiseLevel;
   rating: number;
   reviewCount: number;
   isCertified: boolean;
+  availableDates: string[];
   createdAt: string;
 };
 

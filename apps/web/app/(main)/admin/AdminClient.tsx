@@ -17,10 +17,11 @@ import {
   adminUpdateRole, adminToggleActive, adminDeleteUser,
   adminDeletePost, adminDeleteAdvice,
   adminGetUsers, adminGetPosts, adminGetAdvices,
+  adminGetReviews, adminDeleteReview,
 } from '../../../lib/admin';
-import type { AdminStats, AdminUser, AdminPost, AdminAdvice, AdminPagedResponse } from '../../../types/admin';
+import type { AdminStats, AdminUser, AdminPost, AdminAdvice, AdminReview, AdminPagedResponse } from '../../../types/admin';
 
-type Tab = 'overview' | 'users' | 'posts' | 'advices' | 'categories' | 'specialties';
+type Tab = 'overview' | 'users' | 'posts' | 'advices' | 'reviews' | 'categories' | 'specialties';
 
 const LIMIT = 5;
 
@@ -47,6 +48,7 @@ const STAT_CARDS = [
   { key: 'reports',  icon: AlertTriangle, iconClass: 'text-orange-500', bgClass: 'bg-orange-50' },
   { key: 'advices',  icon: Lightbulb,     iconClass: 'text-purple-600', bgClass: 'bg-purple-50' },
   { key: 'zones',    icon: ShieldAlert,   iconClass: 'text-green-600',  bgClass: 'bg-green-50'  },
+  { key: 'reviews',  icon: Star,          iconClass: 'text-yellow-500', bgClass: 'bg-yellow-50' },
 ];
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -183,11 +185,12 @@ type Props = {
   initialUsers: AdminPagedResponse<AdminUser>;
   initialPosts: AdminPagedResponse<AdminPost>;
   initialAdvices: AdminPagedResponse<AdminAdvice>;
+  initialReviews: AdminPagedResponse<AdminReview>;
   initialCategories: Category[];
   initialSpecialties: Specialty[];
 };
 
-export default function AdminClient({ initialStats, initialUsers, initialPosts, initialAdvices, initialCategories, initialSpecialties }: Props) {
+export default function AdminClient({ initialStats, initialUsers, initialPosts, initialAdvices, initialReviews, initialCategories, initialSpecialties }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
   const [stats] = useState(initialStats);
 
@@ -206,6 +209,11 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
   const [advicesTotal, setAdvicesTotal]   = useState(initialAdvices.total);
   const [advicesPage, setAdvicesPage]     = useState(1);
   const [isPendingAdvices, startAdvices]  = useTransition();
+
+  const [reviews, setReviews]             = useState(initialReviews.data);
+  const [reviewsTotal, setReviewsTotal]   = useState(initialReviews.total);
+  const [reviewsPage, setReviewsPage]     = useState(1);
+  const [isPendingReviews, startReviews]  = useTransition();
 
   const [categories, setCategories]         = useState<Category[]>(initialCategories);
   const [catForm, setCatForm]               = useState({ name: '', color: '#6b7280' });
@@ -237,6 +245,13 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
     startAdvices(async () => {
       const res = await adminGetAdvices({ page, limit: LIMIT });
       setAdvices(res.data); setAdvicesTotal(res.total); setAdvicesPage(page);
+    });
+  };
+
+  const loadReviews = (page: number) => {
+    startReviews(async () => {
+      const res = await adminGetReviews({ page, limit: LIMIT });
+      setReviews(res.data); setReviewsTotal(res.total); setReviewsPage(page);
     });
   };
 
@@ -286,6 +301,18 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
         const updated = advices.filter((a) => a._id !== adviceId);
         setAdvicesTotal((t) => t - 1);
         updated.length === 0 && advicesPage > 1 ? loadAdvices(advicesPage - 1) : setAdvices(updated);
+      }
+    });
+  };
+
+  const handleDeleteReview = (reviewId: string) => {
+    if (!confirm('Supprimer cet avis définitivement ?')) return;
+    startReviews(async () => {
+      const res = await adminDeleteReview(reviewId);
+      if (res.success) {
+        const updated = reviews.filter((r) => r._id !== reviewId);
+        setReviewsTotal((t) => t - 1);
+        updated.length === 0 && reviewsPage > 1 ? loadReviews(reviewsPage - 1) : setReviews(updated);
       }
     });
   };
@@ -363,6 +390,7 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
     { key: 'users',      label: 'Utilisateurs',   icon: <Users size={16} /> },
     { key: 'posts',      label: 'Publications',    icon: <FileText size={16} /> },
     { key: 'advices',    label: 'Conseils',        icon: <Lightbulb size={16} /> },
+    { key: 'reviews',    label: 'Avis',            icon: <Star size={16} /> },
     { key: 'categories',  label: 'Catégories',   icon: <Tag size={16} /> },
     { key: 'specialties', label: 'Spécialités',  icon: <Star size={16} /> },
   ];
@@ -454,12 +482,14 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
                 key === 'posts'   ? stats.posts :
                 key === 'reports' ? stats.reportedPosts :
                 key === 'advices' ? stats.advices :
+                key === 'reviews' ? stats.reviews :
                                     stats.zones;
               const label =
                 key === 'users'   ? 'Utilisateurs' :
                 key === 'posts'   ? 'Publications' :
                 key === 'reports' ? 'Signalements' :
                 key === 'advices' ? 'Conseils' :
+                key === 'reviews' ? 'Avis guides' :
                                     'Zones à risque';
               const sub =
                 key === 'users'   ? `${stats.users.active} actifs · ${stats.users.banned} bannis` :
@@ -655,6 +685,104 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
               {advices.length === 0 && <p className="text-center py-8 text-sm text-gray-400">Aucun conseil</p>}
             </div>
             <Pagination page={advicesPage} total={advicesTotal} limit={LIMIT} onChange={loadAdvices} disabled={isPendingAdvices} />
+          </div>
+        )}
+
+        {/* TAB: Reviews */}
+        {tab === 'reviews' && (
+          <div className="flex flex-col gap-4">
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 text-left">
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Touriste</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Guide</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Note</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Commentaire</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide w-px">Action</th>
+                  </tr>
+                </thead>
+                <tbody className={isPendingReviews ? 'opacity-50' : ''}>
+                  {reviews.map((review) => {
+                    const guide = review.guideId?.userId;
+                    const tourist = review.touristId;
+                    const touristAvatar = tourist?.profilePicture ? `http://localhost:3000${tourist.profilePicture}` : null;
+                    const guideAvatar = guide?.profilePicture ? `http://localhost:3000${guide.profilePicture}` : null;
+                    return (
+                      <tr key={review._id} className="border-b border-gray-50 hover:bg-gray-50/50">
+
+                        {/* Touriste */}
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-2.5">
+                            {touristAvatar ? (
+                              <img src={touristAvatar} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 text-xs font-bold text-gray-500">
+                                {tourist?.firstName?.[0]}{tourist?.lastName?.[0]}
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium text-[#1a1a2e] text-sm">{tourist?.firstName} {tourist?.lastName}</p>
+                              <p className="text-xs text-gray-400">{tourist?.email}</p>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Guide */}
+                        <td className="px-5 py-3.5">
+                          {guide ? (
+                            <div className="flex items-center gap-2.5">
+                              {guideAvatar ? (
+                                <img src={guideAvatar} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0 text-xs font-bold text-blue-600">
+                                  {guide.firstName?.[0]}{guide.lastName?.[0]}
+                                </div>
+                              )}
+                              <p className="font-medium text-blue-700 text-sm">{guide.firstName} {guide.lastName}</p>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400">—</span>
+                          )}
+                        </td>
+
+                        {/* Note */}
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-1.5">
+                            <div className="flex gap-0.5">
+                              {[1,2,3,4,5].map(i => (
+                                <Star key={i} size={12} className={i <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
+                              ))}
+                            </div>
+                            <span className="text-xs font-semibold text-gray-700">{review.rating}/5</span>
+                          </div>
+                        </td>
+
+                        {/* Commentaire */}
+                        <td className="px-5 py-3.5 max-w-xs">
+                          <p className="text-sm text-gray-600 line-clamp-2">{review.comment}</p>
+                        </td>
+
+                        {/* Action */}
+                        <td className="px-5 py-3.5">
+                          <button
+                            onClick={() => handleDeleteReview(review._id)}
+                            disabled={isPendingReviews}
+                            className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center hover:bg-red-100 transition-colors disabled:opacity-40"
+                          >
+                            <Trash2 size={14} className="text-red-600" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {reviews.length === 0 && (
+                <p className="text-center py-8 text-sm text-gray-400">Aucun avis</p>
+              )}
+            </div>
+            <Pagination page={reviewsPage} total={reviewsTotal} limit={LIMIT} onChange={loadReviews} disabled={isPendingReviews} />
           </div>
         )}
 

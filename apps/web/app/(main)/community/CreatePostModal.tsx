@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { X, MapPin } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { X, MapPin, Image } from 'lucide-react';
 import { createPost, updatePost } from '../../../lib/post';
 import type { Post } from '../../../types/post';
 import type { Category } from '../../../types/category';
@@ -22,8 +22,22 @@ export default function CreatePostModal({ onClose, onCreated, editPost, categori
     destination: editPost?.destination ?? '',
     category: defaultCategory,
   });
+  const [files, setFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files ?? []).slice(0, 5 - files.length);
+    setFiles((prev) => [...prev, ...selected]);
+    setPreviews((prev) => [...prev, ...selected.map((f) => URL.createObjectURL(f))]);
+  };
+
+  const removeFile = (i: number) => {
+    setFiles((prev) => prev.filter((_, idx) => idx !== i));
+    setPreviews((prev) => prev.filter((_, idx) => idx !== i));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,9 +48,18 @@ export default function CreatePostModal({ onClose, onCreated, editPost, categori
     setLoading(true);
     setError('');
 
-    const result = isEditing
-      ? await updatePost(editPost._id, form)
-      : await createPost(form);
+    let result;
+    if (isEditing) {
+      result = await updatePost(editPost._id, form);
+    } else {
+      const fd = new FormData();
+      fd.append('title', form.title);
+      fd.append('description', form.description);
+      fd.append('destination', form.destination);
+      fd.append('category', form.category);
+      files.forEach((f) => fd.append('media', f));
+      result = await createPost(fd);
+    }
 
     setLoading(false);
     if (result.success) {
@@ -52,7 +75,7 @@ export default function CreatePostModal({ onClose, onCreated, editPost, categori
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
     >
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
+      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
           <h2 className="text-lg font-bold text-[#1a1a2e]">
             {isEditing ? 'Modifier le post' : 'Nouveau post'}
@@ -122,6 +145,53 @@ export default function CreatePostModal({ onClose, onCreated, editPost, categori
               </select>
             </div>
           </div>
+
+          {/* Media upload — create mode only */}
+          {!isEditing && (
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-[#1a1a2e]">
+                Photos / Vidéos <span className="text-gray-400 font-normal">(optionnel, max 5)</span>
+              </label>
+              {previews.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {previews.map((src, i) => (
+                    <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200">
+                      {files[i]?.type.startsWith('video/') ? (
+                        <video src={src} className="w-full h-full object-cover" muted />
+                      ) : (
+                        <img src={src} alt="" className="w-full h-full object-cover" />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeFile(i)}
+                        className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center"
+                      >
+                        <X size={10} color="white" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {files.length < 5 && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 px-3.5 py-2.5 border border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-[#1a73e8] hover:text-[#1a73e8] transition-colors"
+                >
+                  <Image size={15} />
+                  Ajouter des photos / vidéos
+                </button>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+                multiple
+                onChange={handleFiles}
+                className="hidden"
+              />
+            </div>
+          )}
 
           <div className="flex gap-3 pt-1">
             <button

@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
+import SosButton from '../../components/SosButton';
 import { AuthProvider } from '../../providers/AuthProvider';
 import { getUser } from '../../lib/getUser';
 
@@ -20,9 +21,12 @@ export default async function MainLayout({ children }: { children: React.ReactNo
 
   return (
     <AuthProvider initialUser={user}>
-      <Header />
-      <main>{children}</main>
-      <Footer />
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <Header />
+        <main style={{ flex: 1 }}>{children}</main>
+        <Footer />
+        <SosButton />
+      </div>
     </AuthProvider>
   );
 }

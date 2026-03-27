@@ -18,6 +18,12 @@ export class GuideProfile {
   @Prop({ type: Number, default: 0, min: 0 })
   hourlyRate!: number;
 
+  @Prop({ type: Number, default: 0, min: 0 })
+  yearsExperience!: number;
+
+  @Prop({ type: Number, default: 0, min: 0 })
+  tripsCompleted!: number;
+
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Specialty' }], default: [] })
   specialties!: Types.ObjectId[];
 
@@ -35,6 +41,10 @@ export class GuideProfile {
 
   @Prop({ default: false })
   isCertified!: boolean;
+
+  // Format: 'YYYY-MM-DD'
+  @Prop({ type: [String], default: [] })
+  availableDates!: string[];
 }
 
 export const GuideProfileSchema = SchemaFactory.createForClass(GuideProfile);

@@ -11,9 +11,11 @@ import {
   apiAdminDeletePost,
   apiAdminGetAdvices,
   apiAdminDeleteAdvice,
+  apiAdminGetReviews,
+  apiAdminDeleteReview,
 } from '../services/admin.service';
 import { parseApiError } from '../services/api';
-import type { AdminStats, AdminUser, AdminPost, AdminAdvice, AdminPagedResponse } from '../types/admin';
+import type { AdminStats, AdminUser, AdminPost, AdminAdvice, AdminReview, AdminPagedResponse } from '../types/admin';
 
 async function getToken(): Promise<string> {
   const cookieStore = await cookies();
@@ -96,6 +98,23 @@ export async function adminDeleteAdvice(
 ): Promise<{ success: true } | { success: false; error: string }> {
   try {
     await apiAdminDeleteAdvice(await getToken(), adviceId);
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: parseApiError(e) };
+  }
+}
+
+export async function adminGetReviews(
+  params: { page?: number; limit?: number } = {},
+): Promise<AdminPagedResponse<AdminReview>> {
+  return apiAdminGetReviews(await getToken(), params);
+}
+
+export async function adminDeleteReview(
+  reviewId: string,
+): Promise<{ success: true } | { success: false; error: string }> {
+  try {
+    await apiAdminDeleteReview(await getToken(), reviewId);
     return { success: true };
   } catch (e) {
     return { success: false, error: parseApiError(e) };

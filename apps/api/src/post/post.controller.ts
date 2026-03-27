@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -10,9 +11,15 @@ import {
   Post,
   Query,
   Request,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { Request as ExpressRequest } from 'express';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
+import * as fs from 'fs';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -24,6 +31,20 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 interface AuthRequest extends ExpressRequest {
   user: { id: string; role: string };
 }
+
+const mediaStorage = diskStorage({
+  destination: (_req, _file, cb) => {
+    const dir = join(process.cwd(), 'uploads', 'posts');
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (_req, file, cb) => {
+    const ext = extname(file.originalname).toLowerCase();
+    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+  },
+});
+
+const ALLOWED_MIMETYPES = /^(image\/(jpeg|png|webp)|video\/(mp4|quicktime|webm))$/;
 
 @Controller('posts')
 export class PostController {
@@ -37,8 +58,25 @@ export class PostController {
   @UseGuards(JwtAuthGuard)
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createPostDto: CreatePostDto, @Request() req: AuthRequest) {
-    return this.postService.create(createPostDto, req.user.id);
+  @UseInterceptors(
+    FilesInterceptor('media', 5, {
+      storage: mediaStorage,
+      fileFilter: (_req, file, cb) => {
+        if (!file.mimetype.match(ALLOWED_MIMETYPES)) {
+          return cb(new BadRequestException('Format non supporté (JPEG, PNG, WebP, MP4, WebM)'), false);
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 20 * 1024 * 1024 },
+    }),
+  )
+  async create(
+    @Body() createPostDto: CreatePostDto,
+    @Request() req: AuthRequest,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    const mediaUrls = (files ?? []).map((f) => `/uploads/posts/${f.filename}`);
+    return this.postService.create(createPostDto, req.user.id, mediaUrls);
   }
 
   @UseGuards(JwtAuthGuard)

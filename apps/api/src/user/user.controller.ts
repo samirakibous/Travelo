@@ -2,9 +2,11 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Patch,
   Post,
   Request,
@@ -86,5 +88,18 @@ export class UserController {
   ) {
     if (!file) throw new BadRequestException('Aucun fichier reçu');
     return this.userService.updateAvatar(req.user.id, `/uploads/avatars/${file.filename}`);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/saved-guides')
+  getSavedGuideIds(@Request() req: AuthRequest) {
+    return this.userService.getSavedGuideIds(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('me/saved-guides/:id')
+  @HttpCode(HttpStatus.OK)
+  toggleSavedGuide(@Param('id') id: string, @Request() req: AuthRequest) {
+    return this.userService.toggleSavedGuide(req.user.id, id);
   }
 }

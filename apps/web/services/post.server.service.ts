@@ -1,27 +1,29 @@
 import { getAuthApi } from './api.server';
-import type { Post, PostCategory } from '../types/post';
+import type { Post } from '../types/post';
 
 // Appels authentifiés — Server Components et Server Actions uniquement
 
-export type CreatePostPayload = {
-  title: string;
-  description: string;
-  destination: string;
-  category: PostCategory;
+export type UpdatePostPayload = {
+  title?: string;
+  description?: string;
+  destination?: string;
+  category?: string;
 };
 
 export async function apiUpdatePost(
   postId: string,
-  payload: Partial<CreatePostPayload>,
+  payload: UpdatePostPayload,
 ): Promise<Post> {
   const authApi = await getAuthApi();
   const { data } = await authApi.patch<Post>(`/posts/${postId}`, payload);
   return data;
 }
 
-export async function apiCreatePost(payload: CreatePostPayload): Promise<Post> {
+export async function apiCreatePost(formData: FormData): Promise<Post> {
   const authApi = await getAuthApi();
-  const { data } = await authApi.post<Post>('/posts', payload);
+  const { data } = await authApi.post<Post>('/posts', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return data;
 }
 

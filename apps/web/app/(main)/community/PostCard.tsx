@@ -1,9 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { ThumbsUp, ThumbsDown, Flag, Trash2, MapPin, Pencil, User } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Flag, Trash2, MapPin, Pencil, User, Play } from 'lucide-react';
+
+const STATIC_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:3000';
 import { votePost, deletePost, reportPost } from '../../../lib/post';
 import CreatePostModal from './CreatePostModal';
+import PostComments from './PostComments';
 import { useAuth } from '../../../contexts/AuthContext';
 import type { Post } from '../../../types/post';
 import type { Category } from '../../../types/category';
@@ -101,6 +104,34 @@ export default function PostCard({ post, onDeleted, categories }: Props) {
         <p className="text-sm text-gray-600 line-clamp-3">{currentPost.description}</p>
       </div>
 
+      {/* Media */}
+      {currentPost.mediaUrls?.length > 0 && (
+        <div className={`grid gap-1.5 ${currentPost.mediaUrls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+          {currentPost.mediaUrls.map((url, i) => {
+            const fullUrl = `${STATIC_URL}${url}`;
+            const isVideo = url.match(/\.(mp4|webm|mov)$/i);
+            return isVideo ? (
+              <div key={i} className="relative rounded-xl overflow-hidden bg-black aspect-video">
+                <video src={fullUrl} className="w-full h-full object-cover" controls muted />
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-10 h-10 rounded-full bg-black/40 flex items-center justify-center">
+                    <Play size={18} color="white" fill="white" />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <img
+                key={i}
+                src={fullUrl}
+                alt=""
+                className="w-full rounded-xl object-cover"
+                style={{ maxHeight: currentPost.mediaUrls.length === 1 ? 320 : 160 }}
+              />
+            );
+          })}
+        </div>
+      )}
+
       {/* Destination */}
       <div className="flex items-center gap-1 text-xs text-gray-500">
         <MapPin size={12} />
@@ -169,6 +200,9 @@ export default function PostCard({ post, onDeleted, categories }: Props) {
           )}
         </div>
       </div>
+
+      {/* Comments */}
+      <PostComments postId={post._id} initialCount={0} />
 
       {showEditModal && (
         <CreatePostModal

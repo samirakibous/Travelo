@@ -7,6 +7,7 @@ import { Locate } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import type { SafeZone } from '../../../types/safety-zone';
 import type { Advice } from '../../../types/advice';
+import AdviceVoteButtons from '../../../components/AdviceVoteButtons';
 
 // ── Zone colors ──────────────────────────────────────────────
 const RISK_COLORS = {
@@ -22,10 +23,24 @@ const ZONE_CATEGORY_LABELS: Record<string, string> = {
   accommodation: 'Hébergement', food: 'Restauration', general: 'Général',
 };
 
-// ── Advice colors ─────────────────────────────────────────────
-const ADVICE_COLORS: Record<string, string> = {
-  safety: '#dc2626', health: '#16a34a', transport: '#2563eb',
-  culture: '#9333ea', emergency: '#ea580c',
+// ── Advice type colors & icons ────────────────────────────────
+const ADVICE_TYPE_COLORS: Record<string, string> = {
+  danger:         '#dc2626',
+  prudence:       '#d97706',
+  recommandation: '#16a34a',
+};
+
+const ADVICE_TYPE_LABELS: Record<string, string> = {
+  danger:         'Danger',
+  prudence:       'Prudence',
+  recommandation: 'Recommandation',
+};
+
+// SVG path data for each type icon
+const ADVICE_TYPE_SVG: Record<string, string> = {
+  danger:         '<path d="M12 2L2 20h20L12 2zm0 3.5L19.5 19h-15L12 5.5zm-1 5v5h2v-5h-2zm0 7v2h2v-2h-2z"/>',
+  prudence:       '<path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm1 14h-2v-2h2v2zm0-4h-2V6h2v6z"/>',
+  recommandation: '<path d="M9 12l2 2 4-4M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/>',
 };
 
 const ADVICE_CATEGORY_LABELS: Record<string, string> = {
@@ -33,9 +48,10 @@ const ADVICE_CATEGORY_LABELS: Record<string, string> = {
   culture: 'Culture', emergency: 'Urgence',
 };
 
-function createAdviceIcon(category: string, isCertified: boolean): L.DivIcon {
-  const color = ADVICE_COLORS[category] ?? '#6b7280';
-  const badge = isCertified
+function createAdviceIcon(advice: Advice): L.DivIcon {
+  const color = ADVICE_TYPE_COLORS[advice.adviceType] ?? '#6b7280';
+  const svgPath = ADVICE_TYPE_SVG[advice.adviceType] ?? ADVICE_TYPE_SVG.prudence;
+  const badge = advice.isCertifiedGuide
     ? `<span style="position:absolute;top:-4px;right:-4px;width:10px;height:10px;background:#1a73e8;border-radius:50%;border:1.5px solid white;"></span>`
     : '';
   return L.divIcon({
@@ -45,7 +61,7 @@ function createAdviceIcon(category: string, isCertified: boolean): L.DivIcon {
     html: `
       <div style="position:relative;width:28px;height:28px;">
         <div style="width:28px;height:28px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;">
-          <svg width="13" height="13" fill="white" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 4 12.9V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.1A7 7 0 0 1 12 2zm-1 16h2v1a1 1 0 0 1-2 0v-1z"/></svg>
+          <svg width="14" height="14" fill="white" viewBox="0 0 24 24">${svgPath}</svg>
         </div>
         ${badge}
       </div>`,
@@ -122,12 +138,18 @@ function ZonePopup({ zone }: { zone: SafeZone }) {
 const API_URL = (process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')) ?? 'http://localhost:3000';
 
 function AdvicePopup({ advice }: { advice: Advice }) {
-  const color = ADVICE_COLORS[advice.category] ?? '#6b7280';
+  const typeColor = ADVICE_TYPE_COLORS[advice.adviceType] ?? '#6b7280';
   return (
     <Popup>
-      <div style={{ minWidth: 200, maxWidth: 260 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-          <span style={{ fontSize: 11, fontWeight: 600, color, background: color + '18', padding: '2px 8px', borderRadius: 99 }}>
+      <div style={{ minWidth: 200, maxWidth: 280 }}>
+        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 6 }}>
+          <span style={{
+            fontSize: 11, fontWeight: 600, color: typeColor,
+            background: typeColor + '18', padding: '2px 8px', borderRadius: 99,
+          }}>
+            {ADVICE_TYPE_LABELS[advice.adviceType] ?? advice.adviceType}
+          </span>
+          <span style={{ fontSize: 11, color: '#6b7280', background: '#f3f4f6', padding: '2px 8px', borderRadius: 99 }}>
             {ADVICE_CATEGORY_LABELS[advice.category] ?? advice.category}
           </span>
           {advice.isCertifiedGuide && (
@@ -149,6 +171,13 @@ function AdvicePopup({ advice }: { advice: Advice }) {
           Par {advice.author.firstName} {advice.author.lastName}
           {advice.address && <> · {advice.address}</>}
         </div>
+
+        <AdviceVoteButtons
+          adviceId={advice._id}
+          initialUseful={(advice.usefulVotes ?? []).length}
+          initialNotUseful={(advice.notUsefulVotes ?? []).length}
+          initialUserVote={null}
+        />
       </div>
     </Popup>
   );
@@ -211,7 +240,7 @@ export default function SafetyMap({ zones, advices, loading }: Props) {
           <Marker
             key={advice._id}
             position={[advice.lat, advice.lng]}
-            icon={createAdviceIcon(advice.category, advice.isCertifiedGuide)}
+            icon={createAdviceIcon(advice)}
           >
             <AdvicePopup advice={advice} />
           </Marker>

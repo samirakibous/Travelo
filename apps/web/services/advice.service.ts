@@ -7,6 +7,7 @@ export async function apiGetAdvices(query: AdviceQuery = {}): Promise<Advice[]> 
     if (query.category) params.category = query.category;
     if (query.certifiedOnly) params.certifiedOnly = query.certifiedOnly;
     if (query.authorId) params.authorId = query.authorId;
+    if (query.adviceType) params.adviceType = query.adviceType;
 
     const { data } = await api.get<Advice[]>('/advices', { params });
     return data;

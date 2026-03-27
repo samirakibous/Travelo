@@ -12,4 +12,8 @@ export class QueryAdviceDto {
   @IsOptional()
   @IsString()
   authorId?: string;
+
+  @IsOptional()
+  @IsString()
+  adviceType?: string; // comma-separated: 'danger,prudence,recommandation'
 }
