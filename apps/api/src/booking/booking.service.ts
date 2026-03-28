@@ -27,14 +27,10 @@ export class BookingService {
     const guide = await this.guideModel.findById(guideOid);
     if (!guide) throw new NotFoundException('Guide introuvable');
 
-    if (guide.availableDates.length > 0 && !guide.availableDates.includes(dto.date)) {
-      throw new BadRequestException('Cette date n\'est pas disponible');
-    }
-
     const existing = await this.bookingModel.findOne({
       guideId: guideOid,
       date: dto.date,
-      status: { $in: ['pending', 'confirmed'] },
+      status: 'confirmed',
     });
     if (existing) throw new BadRequestException('Cette date est déjà réservée');
 

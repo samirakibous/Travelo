@@ -79,7 +79,7 @@ type Props = {
 };
 
 export default function GuideProfileClient({ guide, advices, reviews: initialReviews, canReview }: Props) {
-  const { userId, bio, location, hourlyRate, yearsExperience, tripsCompleted, specialties, languages, expertiseLevel, rating, reviewCount, isCertified, availableDates } = guide;
+  const { userId, bio, location, hourlyRate, yearsExperience, tripsCompleted, specialties, languages, expertiseLevel, rating, isCertified } = guide;
   const fullName = `${userId.firstName} ${userId.lastName}`;
   const avatarSrc = userId.profilePicture ? `${API_URL}${userId.profilePicture}` : null;
   const initials = `${userId.firstName[0]}${userId.lastName[0]}`.toUpperCase();
@@ -601,30 +601,20 @@ export default function GuideProfileClient({ guide, advices, reviews: initialRev
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
                   {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
                   {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
-                    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const isToday = calYear === today.getFullYear() && calMonth === today.getMonth() && day === today.getDate();
                     const isSelected = selectedDay === day;
                     const isPast = new Date(calYear, calMonth, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                    const isAvailable = availableDates.includes(dateStr);
-                    const isDisabled = isPast || (!isAvailable && availableDates.length > 0);
+                    const isDisabled = isPast;
                     return (
                       <button
                         key={day}
                         onClick={() => !isDisabled && setSelectedDay(isSelected ? null : day)}
-                        title={isAvailable ? 'Disponible' : availableDates.length > 0 ? 'Non disponible' : undefined}
                         style={{
                           width: '100%', aspectRatio: '1', borderRadius: 6, border: 'none',
                           cursor: isDisabled ? 'default' : 'pointer', fontSize: 12,
                           fontWeight: isToday ? 700 : 400,
-                          background: isSelected ? '#1a73e8'
-                            : isAvailable ? '#e8f5e9'
-                            : isToday ? '#e8f0fe'
-                            : 'transparent',
-                          color: isSelected ? '#fff'
-                            : isDisabled ? '#ccc'
-                            : isAvailable ? '#2e7d32'
-                            : isToday ? '#1a73e8'
-                            : '#1a1a2e',
+                          background: isSelected ? '#1a73e8' : isToday ? '#e8f0fe' : 'transparent',
+                          color: isSelected ? '#fff' : isDisabled ? '#ccc' : isToday ? '#1a73e8' : '#1a1a2e',
                         }}
                       >
                         {day}
@@ -634,19 +624,6 @@ export default function GuideProfileClient({ guide, advices, reviews: initialRev
                 </div>
               </div>
 
-              {/* Légende */}
-              {availableDates.length > 0 && (
-                <div style={{ display: 'flex', gap: 12, marginTop: 12, fontSize: 11, color: '#666' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <div style={{ width: 10, height: 10, borderRadius: 3, background: '#e8f5e9', border: '1px solid #a5d6a7' }} />
-                    Disponible
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <div style={{ width: 10, height: 10, borderRadius: 3, background: '#1a73e8' }} />
-                    Sélectionné
-                  </div>
-                </div>
-              )}
 
               {/* Booking form — shown when a date is selected */}
               {selectedDay && (
@@ -681,18 +658,17 @@ export default function GuideProfileClient({ guide, advices, reviews: initialRev
 
               <button
                 onClick={selectedDay ? submitBooking : undefined}
-                disabled={(availableDates.length > 0 && !selectedDay) || bookingPending}
+                disabled={!selectedDay || bookingPending}
                 style={{
                   width: '100%', marginTop: 12, padding: '13px 0', borderRadius: 10,
-                  background: availableDates.length > 0 && !selectedDay ? '#c5d9f7' : '#1a73e8',
+                  background: !selectedDay ? '#c5d9f7' : '#1a73e8',
                   color: '#fff', fontWeight: 600, fontSize: 14,
-                  border: 'none', cursor: (availableDates.length > 0 && !selectedDay) || bookingPending ? 'default' : 'pointer',
+                  border: 'none', cursor: !selectedDay || bookingPending ? 'default' : 'pointer',
                 }}
               >
                 {bookingPending ? 'Envoi en cours...'
                   : selectedDay ? `Envoyer la demande — ${selectedDay} ${MONTH_NAMES[calMonth]}`
-                  : availableDates.length > 0 ? 'Sélectionnez une date disponible'
-                  : 'Aucune disponibilité renseignée'}
+                  : 'Sélectionnez une date'}
               </button>
             </div>
 

@@ -42,12 +42,6 @@ export class CreateGuideProfileDto {
   @Min(0)
   tripsCompleted?: number;
 
-  @ApiPropertyOptional({ example: ['2024-07-15', '2024-07-20'], description: 'Dates disponibles (YYYY-MM-DD)' })
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  availableDates?: string[];
-
   @ApiProperty({ example: ['64b8f1e2c3d4e5f6a7b8c9d0'], description: 'IDs MongoDB des spécialités' })
   @IsArray()
   @ArrayNotEmpty()
