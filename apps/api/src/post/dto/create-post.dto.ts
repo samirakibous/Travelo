@@ -14,11 +14,6 @@ export class CreatePostDto {
   @MaxLength(1000)
   description!: string;
 
-  @ApiProperty({ example: 'Paris, France', description: 'Destination' })
-  @IsString()
-  @IsNotEmpty()
-  destination!: string;
-
   @ApiProperty({ example: '64b8f1e2c3d4e5f6a7b8c9d0', description: 'ID MongoDB de la catégorie' })
   @IsMongoId()
   @IsNotEmpty()

@@ -1,7 +1,6 @@
 export type AdminStats = {
   users: { total: number; active: number; banned: number };
   posts: number;
-  reportedPosts: number;
   advices: number;
   zones: number;
   reviews: number;
@@ -22,10 +21,8 @@ export type AdminPost = {
   _id: string;
   title: string;
   description: string;
-  destination: string;
   category: { _id: string; name: string; color: string };
   author: { _id: string; firstName: string; lastName: string; email: string };
-  reports: string[];
   createdAt: string;
 };
 

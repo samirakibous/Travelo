@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import {
   Users, FileText, Lightbulb, ShieldAlert,
   Trash2, UserCheck, UserX, ChevronDown, Search,
-  BarChart3, AlertTriangle, ChevronLeft, ChevronRight,
+  BarChart3, ChevronLeft, ChevronRight,
   Tag, Plus, Pencil, X, Check, LogOut, Star,
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -45,7 +45,6 @@ const CATEGORY_CLASSES: Record<string, string> = {
 const STAT_CARDS = [
   { key: 'users',    icon: Users,         iconClass: 'text-blue-600',   bgClass: 'bg-blue-50'   },
   { key: 'posts',    icon: FileText,      iconClass: 'text-cyan-600',   bgClass: 'bg-cyan-50'   },
-  { key: 'reports',  icon: AlertTriangle, iconClass: 'text-orange-500', bgClass: 'bg-orange-50' },
   { key: 'advices',  icon: Lightbulb,     iconClass: 'text-purple-600', bgClass: 'bg-purple-50' },
   { key: 'zones',    icon: ShieldAlert,   iconClass: 'text-green-600',  bgClass: 'bg-green-50'  },
   { key: 'reviews',  icon: Star,          iconClass: 'text-yellow-500', bgClass: 'bg-yellow-50' },
@@ -480,20 +479,17 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
               const val =
                 key === 'users'   ? stats.users.total :
                 key === 'posts'   ? stats.posts :
-                key === 'reports' ? stats.reportedPosts :
                 key === 'advices' ? stats.advices :
                 key === 'reviews' ? stats.reviews :
                                     stats.zones;
               const label =
                 key === 'users'   ? 'Utilisateurs' :
                 key === 'posts'   ? 'Publications' :
-                key === 'reports' ? 'Signalements' :
                 key === 'advices' ? 'Conseils' :
                 key === 'reviews' ? 'Avis guides' :
                                     'Zones à risque';
               const sub =
-                key === 'users'   ? `${stats.users.active} actifs · ${stats.users.banned} bannis` :
-                key === 'reports' ? 'publications signalées' : undefined;
+                key === 'users'   ? `${stats.users.active} actifs · ${stats.users.banned} bannis` : undefined;
 
               return (
                 <div key={key} className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-4">
@@ -622,12 +618,6 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-semibold text-[#1a1a2e] text-sm truncate">{post.title}</p>
-                      {post.reports.length > 0 && (
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-600 shrink-0">
-                          <AlertTriangle size={10} />
-                          {post.reports.length} signalement{post.reports.length > 1 ? 's' : ''}
-                        </span>
-                      )}
                     </div>
                     <p className="text-xs text-gray-500 truncate">{post.description}</p>
                     <div className="flex items-center gap-3 mt-2">
@@ -637,7 +627,6 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
                       >
                         {post.category?.name ?? '—'}
                       </span>
-                      <span className="text-xs text-gray-400">{post.destination}</span>
                       <span className="text-xs text-gray-400">par {post.author?.firstName} {post.author?.lastName}</span>
                     </div>
                   </div>

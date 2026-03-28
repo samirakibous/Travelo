@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Plus, Search, SlidersHorizontal } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import PostCard from './PostCard';
 import CreatePostModal from './CreatePostModal';
@@ -20,23 +20,17 @@ export default function PostFeed({ initialPosts, initialTotal, categories }: Pro
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [total, setTotal] = useState(initialTotal);
   const [showModal, setShowModal] = useState(false);
-  const [search, setSearch] = useState('');
   const [category, setCategory] = useState<string>('all');
-  const [sort, setSort] = useState<'recent' | 'popular'>('recent');
   const [page, setPage] = useState(1);
   const [isPending, startTransition] = useTransition();
 
   const fetchPosts = (params: {
-    destination?: string;
     category?: string;
-    sort?: 'recent' | 'popular';
     page?: number;
   }) => {
     startTransition(async () => {
       const result = await apiGetPosts({
-        destination: params.destination || undefined,
         category: params.category === 'all' ? undefined : params.category,
-        sort: params.sort,
         page: params.page ?? 1,
         limit: 10,
       });
@@ -49,28 +43,17 @@ export default function PostFeed({ initialPosts, initialTotal, categories }: Pro
     });
   };
 
-  const handleSearch = (value: string) => {
-    setSearch(value);
-    setPage(1);
-    fetchPosts({ destination: value, category, sort, page: 1 });
-  };
 
   const handleCategory = (value: string) => {
     setCategory(value);
     setPage(1);
-    fetchPosts({ destination: search, category: value, sort, page: 1 });
-  };
-
-  const handleSort = (value: 'recent' | 'popular') => {
-    setSort(value);
-    setPage(1);
-    fetchPosts({ destination: search, category, sort: value, page: 1 });
+    fetchPosts({ category: value, page: 1 });
   };
 
   const handleLoadMore = () => {
     const nextPage = page + 1;
     setPage(nextPage);
-    fetchPosts({ destination: search, category, sort, page: nextPage });
+    fetchPosts({ category, page: nextPage });
   };
 
   const handleDeleted = (id: string) => {
@@ -104,17 +87,6 @@ export default function PostFeed({ initialPosts, initialTotal, categories }: Pro
 
       {/* Filters */}
       <div className="flex flex-col gap-3 mb-6">
-        <div className="relative">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Rechercher par destination..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1a73e8] transition-colors"
-          />
-        </div>
-
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           <button
             onClick={() => handleCategory('all')}
@@ -137,17 +109,6 @@ export default function PostFeed({ initialPosts, initialTotal, categories }: Pro
             </button>
           ))}
 
-          <div className="ml-auto flex items-center gap-1 shrink-0">
-            <SlidersHorizontal size={14} className="text-gray-400" />
-            <select
-              value={sort}
-              onChange={(e) => handleSort(e.target.value as 'recent' | 'popular')}
-              className="text-sm text-gray-600 bg-transparent focus:outline-none cursor-pointer"
-            >
-              <option value="recent">Récent</option>
-              <option value="popular">Populaire</option>
-            </select>
-          </div>
         </div>
       </div>
 

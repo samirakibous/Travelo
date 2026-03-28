@@ -25,8 +25,6 @@ import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { QueryPostDto } from './dto/query-post.dto';
-import { VotePostDto } from './dto/vote-post.dto';
-import { ReportPostDto } from './dto/report-post.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 interface AuthRequest extends ExpressRequest {
@@ -91,17 +89,32 @@ export class PostController {
 
   @ApiOperation({ summary: 'Modifier une publication' })
   @ApiBearerAuth('JWT')
+  @ApiConsumes('multipart/form-data')
   @ApiResponse({ status: 200, description: 'Publication mise à jour' })
   @ApiResponse({ status: 403, description: 'Non autorisé' })
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
+  @UseInterceptors(
+    FilesInterceptor('media', 5, {
+      storage: mediaStorage,
+      fileFilter: (_req, file, cb) => {
+        if (!file.mimetype.match(ALLOWED_MIMETYPES)) {
+          return cb(new BadRequestException('Format non supporté (JPEG, PNG, WebP, MP4, WebM)'), false);
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 20 * 1024 * 1024 },
+    }),
+  )
   update(
     @Param('id') id: string,
     @Body() dto: UpdatePostDto,
     @Request() req: AuthRequest,
+    @UploadedFiles() files: Express.Multer.File[],
   ) {
-    return this.postService.update(id, req.user.id, dto);
+    const mediaUrls = (files ?? []).map((f) => `/uploads/posts/${f.filename}`);
+    return this.postService.update(id, req.user.id, dto, mediaUrls);
   }
 
   @ApiOperation({ summary: 'Supprimer une publication' })
@@ -121,17 +134,8 @@ export class PostController {
   @UseGuards(JwtAuthGuard)
   @Post(':id/vote')
   @HttpCode(HttpStatus.OK)
-  vote(@Param('id') id: string, @Body() dto: VotePostDto, @Request() req: AuthRequest) {
-    return this.postService.vote(id, req.user.id, dto.type);
+  vote(@Param('id') id: string, @Body('type') type: 'up' | 'down', @Request() req: AuthRequest) {
+    return this.postService.vote(id, req.user.id, type);
   }
 
-  @ApiOperation({ summary: 'Signaler une publication' })
-  @ApiBearerAuth('JWT')
-  @ApiResponse({ status: 200, description: 'Signalement enregistré' })
-  @UseGuards(JwtAuthGuard)
-  @Post(':id/report')
-  @HttpCode(HttpStatus.OK)
-  report(@Param('id') id: string, @Body() dto: ReportPostDto, @Request() req: AuthRequest) {
-    return this.postService.report(id, req.user.id, dto.reason);
-  }
 }

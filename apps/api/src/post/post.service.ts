@@ -16,14 +16,11 @@ export class PostService {
   constructor(@InjectModel(Post.name) private postModel: Model<PostDocument>) {}
 
   async findAll(query: QueryPostDto) {
-    const page = parseInt(query.page ?? '1', 10);
-    const limit = parseInt(query.limit ?? '10', 10);
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
 
     const filter: Record<string, any> = {};
-    if (query.destination) {
-      filter.destination = { $regex: query.destination, $options: 'i' };
-    }
     if (query.category) {
       filter.category = new Types.ObjectId(query.category);
     }
@@ -33,17 +30,12 @@ export class PostService {
         .find(filter)
         .populate('author', 'firstName lastName role')
         .populate('category')
-        .sort(query.sort === 'popular' ? {} : { createdAt: -1 })
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
       this.postModel.countDocuments(filter),
     ]);
-
-    // Tri par popularité côté application si besoin
-    if (query.sort === 'popular') {
-      data.sort((a, b) => (b.upvotes?.length ?? 0) - (a.upvotes?.length ?? 0));
-    }
 
     return { data, total, page, limit };
   }
@@ -58,7 +50,7 @@ export class PostService {
     return post.populate(['author', 'category']);
   }
 
-  async update(postId: string, userId: string, updatePostDto: UpdatePostDto) {
+  async update(postId: string, userId: string, updatePostDto: UpdatePostDto, mediaUrls: string[] = []) {
     const post = await this.postModel.findById(postId);
     if (!post) throw new NotFoundException('Post introuvable');
 
@@ -67,6 +59,7 @@ export class PostService {
     }
 
     Object.assign(post, updatePostDto);
+    if (mediaUrls.length > 0) post.mediaUrls = mediaUrls;
     await post.save();
     return post.populate(['author', 'category']);
   }
@@ -118,18 +111,4 @@ export class PostService {
     };
   }
 
-  async report(postId: string, userId: string, reason: string) {
-    const post = await this.postModel.findById(postId);
-    if (!post) throw new NotFoundException('Post introuvable');
-
-    const userObjectId = new Types.ObjectId(userId);
-    const alreadyReported = post.reports.some((r) => r.user.equals(userObjectId));
-    if (alreadyReported) {
-      throw new ForbiddenException('Vous avez déjà signalé ce post');
-    }
-
-    post.reports.push({ user: userObjectId, reason, createdAt: new Date() });
-    await post.save();
-    return { message: 'Post signalé' };
-  }
 }

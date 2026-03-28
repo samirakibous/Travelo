@@ -11,9 +11,6 @@ export class Post {
   @Prop({ required: true, maxlength: 1000 })
   description!: string;
 
-  @Prop({ required: true })
-  destination!: string;
-
   @Prop({ type: Types.ObjectId, ref: 'Category', required: true })
   category!: Types.ObjectId;
 
@@ -29,17 +26,6 @@ export class Post {
   @Prop({ type: [String], default: [] })
   mediaUrls!: string[];
 
-  @Prop({
-    type: [
-      {
-        user: { type: Types.ObjectId, ref: 'User' },
-        reason: { type: String },
-        createdAt: { type: Date, default: Date.now },
-      },
-    ],
-    default: [],
-  })
-  reports!: Array<{ user: Types.ObjectId; reason: string; createdAt: Date }>;
 }
 
 export const PostSchema = SchemaFactory.createForClass(Post);

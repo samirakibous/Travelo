@@ -11,13 +11,11 @@ export type Post = {
   _id: string;
   title: string;
   description: string;
-  destination: string;
   category: Category;
   author: PostAuthor;
   mediaUrls: string[];
   upvotes: string[];
   downvotes: string[];
-  reports: { user: string; reason: string; createdAt: string }[];
   createdAt: string;
   updatedAt: string;
 };
@@ -30,9 +28,7 @@ export type PostsResponse = {
 };
 
 export type PostQuery = {
-  destination?: string;
   category?: string;
-  sort?: 'recent' | 'popular';
   page?: number;
   limit?: number;
 };
