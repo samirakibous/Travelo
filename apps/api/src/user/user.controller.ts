@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Param,
   Patch,
   Post,
   Request,
@@ -124,23 +123,4 @@ export class UserController {
     );
   }
 
-  @ApiOperation({ summary: 'Obtenir mes guides sauvegardés' })
-  @ApiResponse({
-    status: 200,
-    description: 'Liste des IDs de guides sauvegardés',
-  })
-  @UseGuards(JwtAuthGuard)
-  @Get('me/saved-guides')
-  getSavedGuideIds(@Request() req: AuthRequest) {
-    return this.userService.getSavedGuideIds(req.user.id);
-  }
-
-  @ApiOperation({ summary: 'Ajouter/retirer un guide des favoris' })
-  @ApiResponse({ status: 200, description: 'Favori basculé' })
-  @UseGuards(JwtAuthGuard)
-  @Post('me/saved-guides/:id')
-  @HttpCode(HttpStatus.OK)
-  toggleSavedGuide(@Param('id') id: string, @Request() req: AuthRequest) {
-    return this.userService.toggleSavedGuide(req.user.id, id);
-  }
 }
