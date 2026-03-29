@@ -1,3 +1,10 @@
+export enum PostCategory {
+  SECURITE = 'sécurité',
+  TRANSPORT = 'transport',
+  ARNAQUE = 'arnaque',
+  CULTURE = 'culture',
+  INCIDENT = 'incident',
+}
 export type PostAuthor = {
   _id: string;
   firstName: string;
