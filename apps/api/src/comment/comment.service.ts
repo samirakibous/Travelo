@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Comment, CommentDocument } from './entities/comment.entity';
@@ -7,7 +11,9 @@ import { Role } from '../auth/enums/role.enum';
 
 @Injectable()
 export class CommentService {
-  constructor(@InjectModel(Comment.name) private commentModel: Model<CommentDocument>) {}
+  constructor(
+    @InjectModel(Comment.name) private commentModel: Model<CommentDocument>,
+  ) {}
 
   async findByPost(postId: string) {
     return this.commentModel

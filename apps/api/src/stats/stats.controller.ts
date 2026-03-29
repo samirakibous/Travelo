@@ -8,7 +8,10 @@ export class StatsController {
   constructor(private readonly statsService: StatsService) {}
 
   @ApiOperation({ summary: 'Statistiques publiques de la plateforme' })
-  @ApiResponse({ status: 200, description: 'Statistiques (nb utilisateurs, guides, posts, etc.)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Statistiques (nb utilisateurs, guides, posts, etc.)',
+  })
   @Get()
   getPublicStats() {
     return this.statsService.getPublicStats();

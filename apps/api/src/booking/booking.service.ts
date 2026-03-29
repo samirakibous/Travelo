@@ -7,7 +7,10 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Booking, BookingDocument } from './entities/booking.entity';
-import { GuideProfile, GuideProfileDocument } from '../guide/entities/guide-profile.entity';
+import {
+  GuideProfile,
+  GuideProfileDocument,
+} from '../guide/entities/guide-profile.entity';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { NotificationService } from '../notification/notification.service';
 
@@ -15,7 +18,8 @@ import { NotificationService } from '../notification/notification.service';
 export class BookingService {
   constructor(
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
-    @InjectModel(GuideProfile.name) private guideModel: Model<GuideProfileDocument>,
+    @InjectModel(GuideProfile.name)
+    private guideModel: Model<GuideProfileDocument>,
     private readonly notifService: NotificationService,
   ) {}
 
@@ -63,7 +67,10 @@ export class BookingService {
       .populate({
         path: 'guideId',
         select: 'userId hourlyRate location',
-        populate: { path: 'userId', select: 'firstName lastName profilePicture' },
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName profilePicture',
+        },
       })
       .sort({ createdAt: -1 })
       .lean();
@@ -71,7 +78,9 @@ export class BookingService {
 
   // Guide: see incoming booking requests
   async findByGuide(userId: string) {
-    const guide = await this.guideModel.findOne({ userId: new Types.ObjectId(userId) });
+    const guide = await this.guideModel.findOne({
+      userId: new Types.ObjectId(userId),
+    });
     if (!guide) return [];
 
     return this.bookingModel
@@ -106,10 +115,15 @@ export class BookingService {
 
     if (actor === 'guide') {
       const guide = booking.guideId as any;
-      if (guide.userId.toString() !== userId) throw new ForbiddenException('Accès interdit');
+      if (guide.userId.toString() !== userId)
+        throw new ForbiddenException('Accès interdit');
     } else {
-      if (booking.touristId.toString() !== userId) throw new ForbiddenException('Accès interdit');
-      if (booking.status !== 'pending') throw new BadRequestException('Seules les réservations en attente peuvent être annulées');
+      if (booking.touristId.toString() !== userId)
+        throw new ForbiddenException('Accès interdit');
+      if (booking.status !== 'pending')
+        throw new BadRequestException(
+          'Seules les réservations en attente peuvent être annulées',
+        );
     }
 
     booking.status = status;

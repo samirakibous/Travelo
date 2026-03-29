@@ -14,13 +14,19 @@ import {
 import { ExpertiseLevel } from '../enums/expertise-level.enum';
 
 export class CreateGuideProfileDto {
-  @ApiProperty({ example: 'Guide passionné avec 10 ans d\'expérience...', description: 'Biographie (max 500 car.)' })
+  @ApiProperty({
+    example: "Guide passionné avec 10 ans d'expérience...",
+    description: 'Biographie (max 500 car.)',
+  })
   @IsString()
   @IsNotEmpty()
   @MaxLength(500)
   bio!: string;
 
-  @ApiProperty({ example: 'Paris, France', description: 'Localisation principale' })
+  @ApiProperty({
+    example: 'Paris, France',
+    description: 'Localisation principale',
+  })
   @IsString()
   @IsNotEmpty()
   location!: string;
@@ -30,19 +36,25 @@ export class CreateGuideProfileDto {
   @Min(0)
   hourlyRate!: number;
 
-  @ApiPropertyOptional({ example: 10, description: 'Années d\'expérience' })
+  @ApiPropertyOptional({ example: 10, description: "Années d'expérience" })
   @IsOptional()
   @IsNumber()
   @Min(0)
   yearsExperience?: number;
 
-  @ApiPropertyOptional({ example: 150, description: 'Nombre de voyages effectués' })
+  @ApiPropertyOptional({
+    example: 150,
+    description: 'Nombre de voyages effectués',
+  })
   @IsOptional()
   @IsNumber()
   @Min(0)
   tripsCompleted?: number;
 
-  @ApiProperty({ example: ['64b8f1e2c3d4e5f6a7b8c9d0'], description: 'IDs MongoDB des spécialités' })
+  @ApiProperty({
+    example: ['64b8f1e2c3d4e5f6a7b8c9d0'],
+    description: 'IDs MongoDB des spécialités',
+  })
   @IsArray()
   @ArrayNotEmpty()
   @IsMongoId({ each: true })
@@ -54,7 +66,7 @@ export class CreateGuideProfileDto {
   @IsString({ each: true })
   languages!: string[];
 
-  @ApiProperty({ enum: ExpertiseLevel, description: 'Niveau d\'expertise' })
+  @ApiProperty({ enum: ExpertiseLevel, description: "Niveau d'expertise" })
   @IsEnum(ExpertiseLevel)
   expertiseLevel!: ExpertiseLevel;
 }

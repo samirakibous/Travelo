@@ -10,7 +10,12 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { Request as ExpressRequest } from 'express';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -25,7 +30,7 @@ interface AuthRequest extends ExpressRequest {
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
-  @ApiOperation({ summary: 'Lister les commentaires d\'un post' })
+  @ApiOperation({ summary: "Lister les commentaires d'un post" })
   @ApiResponse({ status: 200, description: 'Liste des commentaires' })
   @Get()
   findByPost(@Param('postId') postId: string) {

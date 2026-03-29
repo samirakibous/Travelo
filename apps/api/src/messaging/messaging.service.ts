@@ -1,14 +1,22 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Conversation, ConversationDocument } from './entities/conversation.entity';
+import {
+  Conversation,
+  ConversationDocument,
+} from './entities/conversation.entity';
 import { Message, MessageDocument } from './entities/message.entity';
 import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class MessagingService {
   constructor(
-    @InjectModel(Conversation.name) private conversationModel: Model<ConversationDocument>,
+    @InjectModel(Conversation.name)
+    private conversationModel: Model<ConversationDocument>,
     @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
     private readonly notifService: NotificationService,
   ) {}
@@ -20,21 +28,30 @@ export class MessagingService {
     const existing = await this.conversationModel
       .findOne({ participants: { $all: [uid, pid], $size: 2 } })
       .populate('participants', 'firstName lastName profilePicture role')
-      .populate({ path: 'lastMessage', populate: { path: 'sender', select: 'firstName lastName' } })
+      .populate({
+        path: 'lastMessage',
+        populate: { path: 'sender', select: 'firstName lastName' },
+      })
       .lean();
 
     if (existing) return existing;
 
     const conv = new this.conversationModel({ participants: [uid, pid] });
     await conv.save();
-    return conv.populate('participants', 'firstName lastName profilePicture role');
+    return conv.populate(
+      'participants',
+      'firstName lastName profilePicture role',
+    );
   }
 
   async getConversations(userId: string) {
     return this.conversationModel
       .find({ participants: new Types.ObjectId(userId) })
       .populate('participants', 'firstName lastName profilePicture role')
-      .populate({ path: 'lastMessage', populate: { path: 'sender', select: 'firstName lastName' } })
+      .populate({
+        path: 'lastMessage',
+        populate: { path: 'sender', select: 'firstName lastName' },
+      })
       .sort({ updatedAt: -1 })
       .lean();
   }
@@ -43,7 +60,9 @@ export class MessagingService {
     const conv = await this.conversationModel.findById(conversationId);
     if (!conv) throw new NotFoundException('Conversation introuvable');
 
-    const isParticipant = conv.participants.some((p) => p.equals(new Types.ObjectId(userId)));
+    const isParticipant = conv.participants.some((p) =>
+      p.equals(new Types.ObjectId(userId)),
+    );
     if (!isParticipant) throw new ForbiddenException('Accès interdit');
 
     return this.messageModel
@@ -57,7 +76,9 @@ export class MessagingService {
     const conv = await this.conversationModel.findById(conversationId);
     if (!conv) throw new NotFoundException('Conversation introuvable');
 
-    const isParticipant = conv.participants.some((p) => p.equals(new Types.ObjectId(senderId)));
+    const isParticipant = conv.participants.some((p) =>
+      p.equals(new Types.ObjectId(senderId)),
+    );
     if (!isParticipant) throw new ForbiddenException('Accès interdit');
 
     const msg = new this.messageModel({
@@ -67,7 +88,7 @@ export class MessagingService {
     });
     await msg.save();
 
-    conv.lastMessage = msg._id as Types.ObjectId;
+    conv.lastMessage = msg._id;
     (conv as any).updatedAt = new Date();
     await conv.save();
 
@@ -78,17 +99,28 @@ export class MessagingService {
 
     // Notify the other participant (fire-and-forget, must not break message delivery)
     const recipientId = this.getRecipientId(conv, senderId);
-    console.log('[Notif] recipientId:', recipientId, '| populated:', !!populated);
+    console.log(
+      '[Notif] recipientId:',
+      recipientId,
+      '| populated:',
+      !!populated,
+    );
     if (recipientId && populated) {
       const sender = (populated as any).sender;
-      const senderName = sender ? `${sender.firstName} ${sender.lastName}` : 'Quelqu\'un';
-      this.notifService.create({
-        userId: recipientId,
-        type: 'new_message',
-        title: 'Nouveau message',
-        body: `${senderName} vous a envoyé un message`,
-        link: `/dashboard/messages/${conversationId}`,
-      }).catch((err) => console.error('[NotifError] message notif failed:', err?.message));
+      const senderName = sender
+        ? `${sender.firstName} ${sender.lastName}`
+        : "Quelqu'un";
+      this.notifService
+        .create({
+          userId: recipientId,
+          type: 'new_message',
+          title: 'Nouveau message',
+          body: `${senderName} vous a envoyé un message`,
+          link: `/dashboard/messages/${conversationId}`,
+        })
+        .catch((err) =>
+          console.error('[NotifError] message notif failed:', err?.message),
+        );
     }
 
     return populated;
@@ -98,7 +130,9 @@ export class MessagingService {
     const conv = await this.conversationModel.findById(conversationId);
     if (!conv) throw new NotFoundException('Conversation introuvable');
 
-    const isParticipant = conv.participants.some((p) => p.equals(new Types.ObjectId(userId)));
+    const isParticipant = conv.participants.some((p) =>
+      p.equals(new Types.ObjectId(userId)),
+    );
     if (!isParticipant) throw new ForbiddenException('Accès interdit');
 
     await this.messageModel.updateMany(
@@ -132,8 +166,13 @@ export class MessagingService {
     return { count };
   }
 
-  getRecipientId(conv: { participants: Types.ObjectId[] }, senderId: string): string | null {
-    const recipient = conv.participants.find((p) => !p.equals(new Types.ObjectId(senderId)));
+  getRecipientId(
+    conv: { participants: Types.ObjectId[] },
+    senderId: string,
+  ): string | null {
+    const recipient = conv.participants.find(
+      (p) => !p.equals(new Types.ObjectId(senderId)),
+    );
     return recipient ? recipient.toString() : null;
   }
 }

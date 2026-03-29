@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
@@ -21,7 +25,9 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto) {
-    const existingUser = await this.userModel.findOne({ email: registerDto.email });
+    const existingUser = await this.userModel.findOne({
+      email: registerDto.email,
+    });
     if (existingUser) {
       throw new ConflictException('Email already exists');
     }
@@ -37,7 +43,10 @@ export class AuthService {
       }
     }
 
-    const hashedPassword = await bcrypt.hash(registerDto.password, BCRYPT_ROUNDS);
+    const hashedPassword = await bcrypt.hash(
+      registerDto.password,
+      BCRYPT_ROUNDS,
+    );
 
     const user = new this.userModel({
       email: registerDto.email,
@@ -49,7 +58,11 @@ export class AuthService {
 
     await user.save();
 
-    const tokens = await this.getTokens(user._id.toString(), user.email, user.role);
+    const tokens = await this.getTokens(
+      user._id.toString(),
+      user.email,
+      user.role,
+    );
     await this.updateRefreshToken(user._id.toString(), tokens.refreshToken);
 
     return {
@@ -72,12 +85,19 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.password,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const tokens = await this.getTokens(user._id.toString(), user.email, user.role);
+    const tokens = await this.getTokens(
+      user._id.toString(),
+      user.email,
+      user.role,
+    );
     await this.updateRefreshToken(user._id.toString(), tokens.refreshToken);
 
     return {
@@ -97,17 +117,22 @@ export class AuthService {
   async getTokens(userId: string, email: string, role: Role) {
     const payload = { sub: userId, email, role };
     const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '1h';
-    const refreshExpiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d';
+    const refreshExpiresIn =
+      this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d';
 
     const accessToken = this.jwtService.sign(payload, { expiresIn } as any);
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: refreshExpiresIn } as any);
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: refreshExpiresIn,
+    } as any);
 
     return { accessToken, refreshToken };
   }
 
   async updateRefreshToken(userId: string, refreshToken: string) {
     const hashedToken = await bcrypt.hash(refreshToken, BCRYPT_ROUNDS);
-    await this.userModel.findByIdAndUpdate(userId, { currentHashedRefreshToken: hashedToken });
+    await this.userModel.findByIdAndUpdate(userId, {
+      currentHashedRefreshToken: hashedToken,
+    });
   }
 
   async refreshTokens(userId: string, refreshToken: string) {
@@ -116,18 +141,27 @@ export class AuthService {
       throw new UnauthorizedException('Access denied');
     }
 
-    const isRefreshTokenValid = await bcrypt.compare(refreshToken, user.currentHashedRefreshToken);
+    const isRefreshTokenValid = await bcrypt.compare(
+      refreshToken,
+      user.currentHashedRefreshToken,
+    );
     if (!isRefreshTokenValid) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const tokens = await this.getTokens(user._id.toString(), user.email, user.role);
+    const tokens = await this.getTokens(
+      user._id.toString(),
+      user.email,
+      user.role,
+    );
     await this.updateRefreshToken(user._id.toString(), tokens.refreshToken);
 
     return tokens;
   }
 
   async logout(userId: string) {
-    await this.userModel.findByIdAndUpdate(userId, { currentHashedRefreshToken: null });
+    await this.userModel.findByIdAndUpdate(userId, {
+      currentHashedRefreshToken: null,
+    });
   }
 }

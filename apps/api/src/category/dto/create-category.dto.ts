@@ -7,7 +7,10 @@ export class CreateCategoryDto {
   @IsNotEmpty()
   name!: string;
 
-  @ApiPropertyOptional({ example: '#ff5733', description: 'Couleur hexadécimale (ex: #ff5733)' })
+  @ApiPropertyOptional({
+    example: '#ff5733',
+    description: 'Couleur hexadécimale (ex: #ff5733)',
+  })
   @IsOptional()
   @IsString()
   @Matches(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, {

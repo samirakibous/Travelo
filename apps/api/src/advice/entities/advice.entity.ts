@@ -13,7 +13,11 @@ export class Advice {
   @Prop({ required: true })
   content!: string;
 
-  @Prop({ required: true, enum: ['danger', 'prudence', 'recommandation'], default: 'prudence' })
+  @Prop({
+    required: true,
+    enum: ['danger', 'prudence', 'recommandation'],
+    default: 'prudence',
+  })
   adviceType!: AdviceType;
 
   @Prop({ required: true, type: Number })
@@ -40,7 +44,6 @@ export class Advice {
   // Denormalized at creation time — avoids an extra join on every read
   @Prop({ default: false })
   isCertifiedGuide!: boolean;
-
 }
 
 export const AdviceSchema = SchemaFactory.createForClass(Advice);

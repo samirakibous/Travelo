@@ -40,7 +40,11 @@ export class PostService {
     return { data, total, page, limit };
   }
 
-  async create(createPostDto: CreatePostDto, userId: string, mediaUrls: string[] = []) {
+  async create(
+    createPostDto: CreatePostDto,
+    userId: string,
+    mediaUrls: string[] = [],
+  ) {
     const post = new this.postModel({
       ...createPostDto,
       author: new Types.ObjectId(userId),
@@ -50,12 +54,19 @@ export class PostService {
     return post.populate(['author', 'category']);
   }
 
-  async update(postId: string, userId: string, updatePostDto: UpdatePostDto, mediaUrls: string[] = []) {
+  async update(
+    postId: string,
+    userId: string,
+    updatePostDto: UpdatePostDto,
+    mediaUrls: string[] = [],
+  ) {
     const post = await this.postModel.findById(postId);
     if (!post) throw new NotFoundException('Post introuvable');
 
     if (post.author.toString() !== userId) {
-      throw new ForbiddenException("Vous n'êtes pas autorisé à modifier ce post");
+      throw new ForbiddenException(
+        "Vous n'êtes pas autorisé à modifier ce post",
+      );
     }
 
     Object.assign(post, updatePostDto);
@@ -72,7 +83,9 @@ export class PostService {
     const isAdmin = userRole === Role.ADMIN;
 
     if (!isAuthor && !isAdmin) {
-      throw new ForbiddenException("Vous n'êtes pas autorisé à supprimer ce post");
+      throw new ForbiddenException(
+        "Vous n'êtes pas autorisé à supprimer ce post",
+      );
     }
 
     await post.deleteOne();
@@ -91,12 +104,16 @@ export class PostService {
       if (hasUpvoted) {
         post.upvotes = post.upvotes.filter((id) => !id.equals(userObjectId));
       } else {
-        post.downvotes = post.downvotes.filter((id) => !id.equals(userObjectId));
+        post.downvotes = post.downvotes.filter(
+          (id) => !id.equals(userObjectId),
+        );
         post.upvotes.push(userObjectId);
       }
     } else {
       if (hasDownvoted) {
-        post.downvotes = post.downvotes.filter((id) => !id.equals(userObjectId));
+        post.downvotes = post.downvotes.filter(
+          (id) => !id.equals(userObjectId),
+        );
       } else {
         post.upvotes = post.upvotes.filter((id) => !id.equals(userObjectId));
         post.downvotes.push(userObjectId);
@@ -107,8 +124,12 @@ export class PostService {
     return {
       upvotes: post.upvotes.length,
       downvotes: post.downvotes.length,
-      userVote: type === 'up' && !hasUpvoted ? 'up' : type === 'down' && !hasDownvoted ? 'down' : null,
+      userVote:
+        type === 'up' && !hasUpvoted
+          ? 'up'
+          : type === 'down' && !hasDownvoted
+            ? 'down'
+            : null,
     };
   }
-
 }

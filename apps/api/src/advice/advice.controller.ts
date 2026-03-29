@@ -15,7 +15,14 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { Request as ExpressRequest } from 'express';
 import { diskStorage } from 'multer';
@@ -46,7 +53,8 @@ const mediaStorage = diskStorage({
   },
 });
 
-const ALLOWED_MIMETYPES = /^(image\/(jpeg|png|webp)|video\/(mp4|quicktime|webm))$/;
+const ALLOWED_MIMETYPES =
+  /^(image\/(jpeg|png|webp)|video\/(mp4|quicktime|webm))$/;
 
 @ApiTags('Advices')
 @Controller('advices')
@@ -62,7 +70,10 @@ export class AdviceController {
 
   @ApiOperation({ summary: 'Mes conseils' })
   @ApiBearerAuth('JWT')
-  @ApiResponse({ status: 200, description: 'Conseils de l\'utilisateur connecté' })
+  @ApiResponse({
+    status: 200,
+    description: "Conseils de l'utilisateur connecté",
+  })
   @Get('mine')
   @UseGuards(JwtAuthGuard)
   findMine(@Request() req: AuthRequest) {
@@ -80,7 +91,19 @@ export class AdviceController {
   @ApiOperation({ summary: 'Créer un conseil (guide uniquement)' })
   @ApiBearerAuth('JWT')
   @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { title: { type: 'string' }, content: { type: 'string' }, category: { type: 'string' }, lat: { type: 'number' }, lng: { type: 'number' }, media: { type: 'array', items: { type: 'string', format: 'binary' } } } } })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        content: { type: 'string' },
+        category: { type: 'string' },
+        lat: { type: 'number' },
+        lng: { type: 'number' },
+        media: { type: 'array', items: { type: 'string', format: 'binary' } },
+      },
+    },
+  })
   @ApiResponse({ status: 201, description: 'Conseil créé' })
   @ApiResponse({ status: 403, description: 'Rôle guide requis' })
   @Post()
@@ -92,7 +115,12 @@ export class AdviceController {
       storage: mediaStorage,
       fileFilter: (_req, file, cb) => {
         if (!file.mimetype.match(ALLOWED_MIMETYPES)) {
-          return cb(new BadRequestException('Format non supporté (JPEG, PNG, WebP, MP4, WebM)'), false);
+          return cb(
+            new BadRequestException(
+              'Format non supporté (JPEG, PNG, WebP, MP4, WebM)',
+            ),
+            false,
+          );
         }
         cb(null, true);
       },

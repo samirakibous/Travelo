@@ -15,7 +15,14 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { Request as ExpressRequest } from 'express';
 import { diskStorage } from 'multer';
@@ -43,7 +50,8 @@ const mediaStorage = diskStorage({
   },
 });
 
-const ALLOWED_MIMETYPES = /^(image\/(jpeg|png|webp)|video\/(mp4|quicktime|webm))$/;
+const ALLOWED_MIMETYPES =
+  /^(image\/(jpeg|png|webp)|video\/(mp4|quicktime|webm))$/;
 
 @ApiTags('Posts')
 @Controller('posts')
@@ -60,7 +68,18 @@ export class PostController {
   @ApiOperation({ summary: 'Créer une publication' })
   @ApiBearerAuth('JWT')
   @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { title: { type: 'string' }, description: { type: 'string' }, destination: { type: 'string' }, category: { type: 'string' }, media: { type: 'array', items: { type: 'string', format: 'binary' } } } } })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        description: { type: 'string' },
+        destination: { type: 'string' },
+        category: { type: 'string' },
+        media: { type: 'array', items: { type: 'string', format: 'binary' } },
+      },
+    },
+  })
   @ApiResponse({ status: 201, description: 'Publication créée' })
   @ApiResponse({ status: 401, description: 'Non authentifié' })
   @UseGuards(JwtAuthGuard)
@@ -71,7 +90,12 @@ export class PostController {
       storage: mediaStorage,
       fileFilter: (_req, file, cb) => {
         if (!file.mimetype.match(ALLOWED_MIMETYPES)) {
-          return cb(new BadRequestException('Format non supporté (JPEG, PNG, WebP, MP4, WebM)'), false);
+          return cb(
+            new BadRequestException(
+              'Format non supporté (JPEG, PNG, WebP, MP4, WebM)',
+            ),
+            false,
+          );
         }
         cb(null, true);
       },
@@ -100,7 +124,12 @@ export class PostController {
       storage: mediaStorage,
       fileFilter: (_req, file, cb) => {
         if (!file.mimetype.match(ALLOWED_MIMETYPES)) {
-          return cb(new BadRequestException('Format non supporté (JPEG, PNG, WebP, MP4, WebM)'), false);
+          return cb(
+            new BadRequestException(
+              'Format non supporté (JPEG, PNG, WebP, MP4, WebM)',
+            ),
+            false,
+          );
         }
         cb(null, true);
       },
@@ -134,8 +163,11 @@ export class PostController {
   @UseGuards(JwtAuthGuard)
   @Post(':id/vote')
   @HttpCode(HttpStatus.OK)
-  vote(@Param('id') id: string, @Body('type') type: 'up' | 'down', @Request() req: AuthRequest) {
+  vote(
+    @Param('id') id: string,
+    @Body('type') type: 'up' | 'down',
+    @Request() req: AuthRequest,
+  ) {
     return this.postService.vote(id, req.user.id, type);
   }
-
 }

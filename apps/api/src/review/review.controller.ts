@@ -10,7 +10,12 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { Request as ExpressRequest } from 'express';
 import { ReviewService } from './review.service';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -25,7 +30,7 @@ interface AuthRequest extends ExpressRequest {
 export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 
-  @ApiOperation({ summary: 'Lister les avis d\'un guide' })
+  @ApiOperation({ summary: "Lister les avis d'un guide" })
   @ApiResponse({ status: 200, description: 'Liste des avis' })
   @Get()
   findAll(@Param('guideId') guideId: string) {
@@ -35,7 +40,10 @@ export class ReviewController {
   @ApiOperation({ summary: 'Laisser un avis sur un guide' })
   @ApiBearerAuth('JWT')
   @ApiResponse({ status: 201, description: 'Avis créé' })
-  @ApiResponse({ status: 403, description: 'Non autorisé (doit être un touriste)' })
+  @ApiResponse({
+    status: 403,
+    description: 'Non autorisé (doit être un touriste)',
+  })
   @Post()
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)

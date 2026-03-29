@@ -10,7 +10,12 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { Request as ExpressRequest } from 'express';
 import { MessagingService } from './messaging.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
@@ -53,7 +58,7 @@ export class MessagingController {
     return this.messagingService.findOrCreate(req.user.id, dto.participantId);
   }
 
-  @ApiOperation({ summary: 'Lire les messages d\'une conversation' })
+  @ApiOperation({ summary: "Lire les messages d'une conversation" })
   @ApiResponse({ status: 200, description: 'Messages de la conversation' })
   @Get('conversations/:id/messages')
   getMessages(@Param('id') id: string, @Request() req: AuthRequest) {

@@ -37,7 +37,9 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Travelo API')
-    .setDescription('Documentation de l\'API Travelo — plateforme de voyage connectant touristes et guides locaux')
+    .setDescription(
+      "Documentation de l'API Travelo — plateforme de voyage connectant touristes et guides locaux",
+    )
     .setVersion('1.0')
     .addBearerAuth(
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
@@ -56,7 +58,7 @@ async function bootstrap() {
     .addTag('Specialties', 'Spécialités des guides')
     .addTag('Messaging', 'Messagerie privée')
     .addTag('Notifications', 'Notifications utilisateur')
-    .addTag('SOS', 'Contacts d\'urgence et numéros SOS')
+    .addTag('SOS', "Contacts d'urgence et numéros SOS")
     .addTag('Stats', 'Statistiques publiques')
     .addTag('Admin', 'Administration (accès restreint)')
     .build();
@@ -69,7 +71,11 @@ async function bootstrap() {
   });
 
   await app.listen(process.env.PORT ?? 3000);
-  console.log(`Application running on: http://localhost:${process.env.PORT ?? 3000}/api`);
-  console.log(`Swagger docs: http://localhost:${process.env.PORT ?? 3000}/api/docs`);
+  console.log(
+    `Application running on: http://localhost:${process.env.PORT ?? 3000}/api`,
+  );
+  console.log(
+    `Swagger docs: http://localhost:${process.env.PORT ?? 3000}/api/docs`,
+  );
 }
 bootstrap();

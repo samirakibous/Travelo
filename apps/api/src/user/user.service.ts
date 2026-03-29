@@ -44,7 +44,8 @@ export class UserService {
     if (!user) throw new NotFoundException('Utilisateur introuvable');
 
     const isValid = await bcrypt.compare(dto.currentPassword, user.password);
-    if (!isValid) throw new UnauthorizedException('Mot de passe actuel incorrect');
+    if (!isValid)
+      throw new UnauthorizedException('Mot de passe actuel incorrect');
 
     user.password = await bcrypt.hash(dto.newPassword, 10);
     await user.save();
@@ -60,22 +61,36 @@ export class UserService {
   }
 
   async getSavedGuideIds(userId: string): Promise<string[]> {
-    const user = await this.userModel.findById(userId).select('savedGuides').lean();
+    const user = await this.userModel
+      .findById(userId)
+      .select('savedGuides')
+      .lean();
     if (!user) return [];
-    return ((user as any).savedGuides ?? []).map((id: Types.ObjectId) => id.toString());
+    return ((user as any).savedGuides ?? []).map((id: Types.ObjectId) =>
+      id.toString(),
+    );
   }
 
-  async toggleSavedGuide(userId: string, guideProfileId: string): Promise<{ saved: boolean }> {
+  async toggleSavedGuide(
+    userId: string,
+    guideProfileId: string,
+  ): Promise<{ saved: boolean }> {
     const user = await this.userModel.findById(userId).select('savedGuides');
     if (!user) throw new NotFoundException('Utilisateur introuvable');
 
     const gid = new Types.ObjectId(guideProfileId);
-    const isSaved = (user as any).savedGuides.some((id: Types.ObjectId) => id.equals(gid));
+    const isSaved = (user as any).savedGuides.some((id: Types.ObjectId) =>
+      id.equals(gid),
+    );
 
     if (isSaved) {
-      await this.userModel.findByIdAndUpdate(userId, { $pull: { savedGuides: gid } });
+      await this.userModel.findByIdAndUpdate(userId, {
+        $pull: { savedGuides: gid },
+      });
     } else {
-      await this.userModel.findByIdAndUpdate(userId, { $addToSet: { savedGuides: gid } });
+      await this.userModel.findByIdAndUpdate(userId, {
+        $addToSet: { savedGuides: gid },
+      });
     }
 
     return { saved: !isSaved };

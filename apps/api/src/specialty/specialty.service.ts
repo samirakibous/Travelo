@@ -1,9 +1,18 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException, OnApplicationBootstrap } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+  OnApplicationBootstrap,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Specialty, SpecialtyDocument } from './entities/specialty.entity';
 import { CreateSpecialtyDto } from './dto/create-specialty.dto';
-import { GuideProfile, GuideProfileDocument } from '../guide/entities/guide-profile.entity';
+import {
+  GuideProfile,
+  GuideProfileDocument,
+} from '../guide/entities/guide-profile.entity';
 
 const SEED_SPECIALTIES = [
   'Randonnée',
@@ -19,14 +28,18 @@ const SEED_SPECIALTIES = [
 @Injectable()
 export class SpecialtyService implements OnApplicationBootstrap {
   constructor(
-    @InjectModel(Specialty.name) private specialtyModel: Model<SpecialtyDocument>,
-    @InjectModel(GuideProfile.name) private guideModel: Model<GuideProfileDocument>,
+    @InjectModel(Specialty.name)
+    private specialtyModel: Model<SpecialtyDocument>,
+    @InjectModel(GuideProfile.name)
+    private guideModel: Model<GuideProfileDocument>,
   ) {}
 
   async onApplicationBootstrap() {
     const count = await this.specialtyModel.countDocuments();
     if (count === 0) {
-      await this.specialtyModel.insertMany(SEED_SPECIALTIES.map((name) => ({ name })));
+      await this.specialtyModel.insertMany(
+        SEED_SPECIALTIES.map((name) => ({ name })),
+      );
     }
   }
 
@@ -35,13 +48,18 @@ export class SpecialtyService implements OnApplicationBootstrap {
   }
 
   async create(dto: CreateSpecialtyDto) {
-    const exists = await this.specialtyModel.findOne({ name: { $regex: `^${dto.name}$`, $options: 'i' } });
-    if (exists) throw new ConflictException('Une spécialité avec ce nom existe déjà');
+    const exists = await this.specialtyModel.findOne({
+      name: { $regex: `^${dto.name}$`, $options: 'i' },
+    });
+    if (exists)
+      throw new ConflictException('Une spécialité avec ce nom existe déjà');
     return this.specialtyModel.create({ name: dto.name });
   }
 
   async update(id: string, dto: Partial<CreateSpecialtyDto>) {
-    const updated = await this.specialtyModel.findByIdAndUpdate(id, dto, { new: true });
+    const updated = await this.specialtyModel.findByIdAndUpdate(id, dto, {
+      new: true,
+    });
     if (!updated) throw new NotFoundException('Spécialité introuvable');
     return updated;
   }
@@ -50,9 +68,13 @@ export class SpecialtyService implements OnApplicationBootstrap {
     const specialty = await this.specialtyModel.findById(id);
     if (!specialty) throw new NotFoundException('Spécialité introuvable');
 
-    const guidesCount = await this.guideModel.countDocuments({ specialties: new Types.ObjectId(id) });
+    const guidesCount = await this.guideModel.countDocuments({
+      specialties: new Types.ObjectId(id),
+    });
     if (guidesCount > 0)
-      throw new BadRequestException(`Impossible de supprimer : ${guidesCount} guide(s) utilisent cette spécialité`);
+      throw new BadRequestException(
+        `Impossible de supprimer : ${guidesCount} guide(s) utilisent cette spécialité`,
+      );
 
     await this.specialtyModel.findByIdAndDelete(id);
     return { success: true };

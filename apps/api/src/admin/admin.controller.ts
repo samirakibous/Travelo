@@ -10,7 +10,13 @@ import {
   ParseIntPipe,
   DefaultValuePipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -47,7 +53,7 @@ export class AdminController {
     return this.adminService.getUsers(page, limit, search);
   }
 
-  @ApiOperation({ summary: 'Modifier le rôle d\'un utilisateur' })
+  @ApiOperation({ summary: "Modifier le rôle d'un utilisateur" })
   @ApiResponse({ status: 200, description: 'Rôle mis à jour' })
   @Patch('users/:id/role')
   updateUserRole(@Param('id') id: string, @Body('role') role: Role) {

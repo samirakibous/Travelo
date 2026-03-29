@@ -8,7 +8,12 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { Request as ExpressRequest } from 'express';
 import { NotificationService } from './notification.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -32,14 +37,20 @@ export class NotificationController {
   }
 
   @ApiOperation({ summary: 'Nombre de notifications non lues' })
-  @ApiResponse({ status: 200, description: 'Compteur de notifications non lues' })
+  @ApiResponse({
+    status: 200,
+    description: 'Compteur de notifications non lues',
+  })
   @Get('unread-count')
   getUnreadCount(@Request() req: AuthRequest) {
     return this.notifService.getUnreadCount(req.user.id);
   }
 
   @ApiOperation({ summary: 'Marquer toutes les notifications comme lues' })
-  @ApiResponse({ status: 200, description: 'Toutes les notifications marquées comme lues' })
+  @ApiResponse({
+    status: 200,
+    description: 'Toutes les notifications marquées comme lues',
+  })
   @Patch('read-all')
   @HttpCode(HttpStatus.OK)
   markAllRead(@Request() req: AuthRequest) {
