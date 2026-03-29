@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsEnum, IsNumber, IsOptional, Min, Max } from 'class-validator';
+
 import { Type } from 'class-transformer';
 
 export class CreateAdviceDto {
@@ -10,10 +11,6 @@ export class CreateAdviceDto {
   @ApiProperty({ example: 'Dans cette zone, soyez vigilants avec vos affaires.', description: 'Contenu détaillé' })
   @IsString()
   content!: string;
-
-  @ApiProperty({ enum: ['safety', 'health', 'transport', 'culture', 'emergency'], description: 'Catégorie du conseil' })
-  @IsEnum(['safety', 'health', 'transport', 'culture', 'emergency'])
-  category!: 'safety' | 'health' | 'transport' | 'culture' | 'emergency';
 
   @ApiProperty({ example: 48.8566, description: 'Latitude (-90 à 90)' })
   @Type(() => Number)
@@ -39,8 +36,4 @@ export class CreateAdviceDto {
   @IsEnum(['danger', 'prudence', 'recommandation'])
   adviceType?: 'danger' | 'prudence' | 'recommandation';
 
-  @ApiPropertyOptional({ example: '64b8f1e2c3d4e5f6a7b8c9d0', description: 'ID de la zone de sécurité liée' })
-  @IsOptional()
-  @IsString()
-  linkedZone?: string;
 }

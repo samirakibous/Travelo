@@ -654,7 +654,6 @@ export default function AdminClient({ initialStats, initialUsers, initialPosts, 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-semibold text-[#1a1a2e] text-sm truncate">{advice.title}</p>
-                      <CategoryBadge category={advice.category} />
                     </div>
                     <p className="text-xs text-gray-500 line-clamp-2">{advice.content}</p>
                     <div className="flex items-center gap-3 mt-2">

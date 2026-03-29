@@ -2,11 +2,6 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsEnum } from 'class-validator';
 
 export class QueryAdviceDto {
-  @ApiPropertyOptional({ example: 'safety,health', description: 'Catégories séparées par virgule' })
-  @IsOptional()
-  @IsString()
-  category?: string;
-
   @ApiPropertyOptional({ enum: ['true', 'false'], description: 'Filtrer les guides certifiés uniquement' })
   @IsOptional()
   @IsEnum(['true', 'false'])

@@ -3,7 +3,6 @@ import { Document, Types } from 'mongoose';
 
 export type AdviceDocument = Advice & Document;
 
-export type AdviceCategory = 'safety' | 'health' | 'transport' | 'culture' | 'emergency';
 export type AdviceType = 'danger' | 'prudence' | 'recommandation';
 
 @Schema({ timestamps: true })
@@ -13,9 +12,6 @@ export class Advice {
 
   @Prop({ required: true })
   content!: string;
-
-  @Prop({ required: true, enum: ['safety', 'health', 'transport', 'culture', 'emergency'] })
-  category!: AdviceCategory;
 
   @Prop({ required: true, enum: ['danger', 'prudence', 'recommandation'], default: 'prudence' })
   adviceType!: AdviceType;
@@ -45,8 +41,6 @@ export class Advice {
   @Prop({ default: false })
   isCertifiedGuide!: boolean;
 
-  @Prop({ type: Types.ObjectId, ref: 'SafeZone' })
-  linkedZone?: Types.ObjectId;
 }
 
 export const AdviceSchema = SchemaFactory.createForClass(Advice);

@@ -4,17 +4,9 @@ import { useState, useTransition, useRef } from 'react';
 import { Save, Image, X, AlertCircle, CheckCircle } from 'lucide-react';
 import { createAdvice } from '../../../../lib/advice';
 import LocationPicker from './LocationPicker';
-import type { Advice, AdviceCategory, AdviceType } from '../../../../types/advice';
+import type { Advice, AdviceType } from '../../../../types/advice';
 
 type Coords = { lat: number; lng: number };
-
-const CATEGORIES: { value: AdviceCategory; label: string; color: string }[] = [
-  { value: 'safety',    label: 'Sécurité',   color: '#dc2626' },
-  { value: 'health',    label: 'Santé',       color: '#16a34a' },
-  { value: 'transport', label: 'Transport',   color: '#2563eb' },
-  { value: 'culture',   label: 'Culture',     color: '#9333ea' },
-  { value: 'emergency', label: 'Urgence',     color: '#ea580c' },
-];
 
 const ADVICE_TYPES: { value: AdviceType; label: string; color: string; desc: string }[] = [
   { value: 'danger',         label: 'Danger',         color: '#dc2626', desc: 'Risque élevé' },
@@ -35,7 +27,6 @@ export default function CreateAdviceForm({ onCreated }: { onCreated: (advice: Ad
   const [form, setForm] = useState({
     title: '',
     content: '',
-    category: 'safety' as AdviceCategory,
     adviceType: 'prudence' as AdviceType,
     address: '',
   });
@@ -67,7 +58,6 @@ export default function CreateAdviceForm({ onCreated }: { onCreated: (advice: Ad
       const fd = new FormData();
       fd.append('title', form.title);
       fd.append('content', form.content);
-      fd.append('category', form.category);
       fd.append('adviceType', form.adviceType);
       fd.append('lat', String(coords.lat));
       fd.append('lng', String(coords.lng));
@@ -77,7 +67,7 @@ export default function CreateAdviceForm({ onCreated }: { onCreated: (advice: Ad
       const result = await createAdvice(fd);
       if (result.success) {
         onCreated(result.data);
-        setForm({ title: '', content: '', category: 'safety', adviceType: 'prudence', address: '' });
+        setForm({ title: '', content: '', adviceType: 'prudence', address: '' });
         setCoords(null);
         setFiles([]);
         setPreviews([]);
@@ -104,28 +94,6 @@ export default function CreateAdviceForm({ onCreated }: { onCreated: (advice: Ad
           required
           className="px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1a73e8] transition-colors"
         />
-      </div>
-
-      {/* Catégorie */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-[#1a1a2e]">Catégorie</label>
-        <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.value}
-              type="button"
-              onClick={() => setForm({ ...form, category: cat.value })}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold border-2 transition-colors"
-              style={{
-                borderColor: form.category === cat.value ? cat.color : '#e5e7eb',
-                color: form.category === cat.value ? cat.color : '#6b7280',
-                background: form.category === cat.value ? cat.color + '15' : 'transparent',
-              }}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Type de conseil */}

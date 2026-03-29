@@ -11,10 +11,6 @@ import {
   Globe,
   Shield,
   AlertTriangle,
-  Heart,
-  Bus,
-  Landmark,
-  Zap,
   Award,
   Clock,
   Users,
@@ -22,7 +18,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import type { GuideProfile } from '../../../../types/guide';
-import type { Advice, AdviceCategory } from '../../../../types/advice';
+import type { Advice } from '../../../../types/advice';
 import type { Review } from '../../../../types/review';
 import { createReview } from '../../../../lib/review';
 import { createBooking } from '../../../../lib/booking';
@@ -32,31 +28,6 @@ import { useAuth } from '../../../../contexts/AuthContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:3000';
 
-const EXPERTISE_LABELS: Record<string, string> = {
-  elite: 'TOP RATED',
-  professional: 'PROFESSIONNEL',
-  local: 'LOCAL',
-};
-
-const EXPERTISE_COLORS: Record<string, string> = {
-  elite: '#2e7d32',
-  professional: '#1a73e8',
-  local: '#e65100',
-};
-
-const CATEGORY_CONFIG: Record<AdviceCategory, {
-  label: string;
-  color: string;
-  bg: string;
-  border: string;
-  Icon: React.ElementType;
-}> = {
-  safety:    { label: 'Sécurité',   color: '#c62828', bg: '#ffebee', border: '#ef9a9a', Icon: AlertTriangle },
-  health:    { label: 'Santé',      color: '#2e7d32', bg: '#e8f5e9', border: '#a5d6a7', Icon: Heart },
-  transport: { label: 'Transport',  color: '#1565c0', bg: '#e3f2fd', border: '#90caf9', Icon: Bus },
-  culture:   { label: 'Culture',    color: '#6a1b9a', bg: '#f3e5f5', border: '#ce93d8', Icon: Landmark },
-  emergency: { label: 'Urgence',    color: '#e65100', bg: '#fff3e0', border: '#ffcc80', Icon: Zap },
-};
 
 const DAYS = ['D', 'L', 'M', 'Me', 'J', 'V', 'S'];
 
@@ -83,8 +54,8 @@ export default function GuideProfileClient({ guide, advices, reviews: initialRev
   const fullName = `${userId.firstName} ${userId.lastName}`;
   const avatarSrc = userId.profilePicture ? `${API_URL}${userId.profilePicture}` : null;
   const initials = `${userId.firstName[0]}${userId.lastName[0]}`.toUpperCase();
-  const badgeLabel = EXPERTISE_LABELS[expertiseLevel] ?? expertiseLevel.toUpperCase();
-  const badgeColor = EXPERTISE_COLORS[expertiseLevel] ?? '#1a73e8';
+  const badgeLabel = expertiseLevel.toUpperCase();
+  const badgeColor = '#1a73e8';
 
   const router = useRouter();
   const { user: currentUser } = useAuth();
@@ -305,35 +276,39 @@ export default function GuideProfileClient({ guide, advices, reviews: initialRev
                   {/* Advice list */}
                   <div style={{ flex: '0 0 58%', display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 320, overflowY: 'auto' }}>
                     {advices.map((advice) => {
-                      const cat = CATEGORY_CONFIG[advice.category] ?? CATEGORY_CONFIG.safety;
-                      const { Icon } = cat;
+                      let color = '#d97706', bg = '#fff3e0', border = '#ffcc80', label = 'Prudence', Icon = Shield;
+                      if (advice.adviceType === 'danger') {
+                        color = '#c62828'; bg = '#ffebee'; border = '#ef9a9a'; label = 'Danger'; Icon = AlertTriangle;
+                      } else if (advice.adviceType === 'recommandation') {
+                        color = '#2e7d32'; bg = '#e8f5e9'; border = '#a5d6a7'; label = 'Recommandation'; Icon = BadgeCheck;
+                      }
                       const isExpanded = expandedAdvice === advice._id;
                       return (
                         <div
                           key={advice._id}
                           style={{
-                            background: cat.bg, border: `1px solid ${cat.border}`,
+                            background: bg, border: `1px solid ${border}`,
                             borderRadius: 10, padding: '12px 14px', cursor: 'pointer',
                           }}
                           onClick={() => setExpandedAdvice(isExpanded ? null : advice._id)}
                         >
                           {/* Header row */}
                           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 7, marginBottom: 4 }}>
-                            <Icon size={14} color={cat.color} style={{ flexShrink: 0, marginTop: 2 }} />
+                            <Icon size={14} color={color} style={{ flexShrink: 0, marginTop: 2 }} />
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                                <span style={{ fontSize: 13, fontWeight: 600, color: cat.color }}>{advice.title}</span>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: color }}>{advice.title}</span>
                                 <span style={{
                                   fontSize: 10, fontWeight: 600, padding: '1px 7px',
-                                  borderRadius: 10, background: cat.color, color: '#fff',
+                                  borderRadius: 10, background: color, color: '#fff',
                                   textTransform: 'uppercase', letterSpacing: '0.04em',
                                 }}>
-                                  {cat.label}
+                                  {label}
                                 </span>
                               </div>
                               {advice.address && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 3 }}>
-                                  <MapPin size={10} color={cat.color} />
+                                  <MapPin size={10} color={color} />
                                   <span style={{ fontSize: 11, color: '#666' }}>{advice.address}</span>
                                 </div>
                               )}
@@ -393,7 +368,9 @@ export default function GuideProfileClient({ guide, advices, reviews: initialRev
                     </div>
                     {/* Visual pins */}
                     {mapPins.slice(0, 5).map((a, i) => {
-                      const cat = CATEGORY_CONFIG[a.category] ?? CATEGORY_CONFIG.safety;
+                      let color = '#d97706';
+                      if (a.adviceType === 'danger') color = '#c62828';
+                      else if (a.adviceType === 'recommandation') color = '#2e7d32';
                       const positions = [
                         { top: '22%', left: '44%' }, { top: '52%', left: '28%' },
                         { top: '62%', left: '58%' }, { top: '35%', left: '70%' },
@@ -404,7 +381,7 @@ export default function GuideProfileClient({ guide, advices, reviews: initialRev
                         <div key={a._id} title={a.title} style={{
                           position: 'absolute', top: pos.top, left: pos.left,
                           width: 13, height: 13, borderRadius: '50%',
-                          background: cat.color, border: '2px solid #fff',
+                          background: color, border: '2px solid #fff',
                           boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
                           cursor: 'pointer',
                         }} />

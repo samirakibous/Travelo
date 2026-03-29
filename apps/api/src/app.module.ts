@@ -8,7 +8,6 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { GuideModule } from './guide/guide.module';
-import { SafeZoneModule } from './safety-zone/safety-zone.module';
 import { AdviceModule } from './advice/advice.module';
 import { AdminModule } from './admin/admin.module';
 import { CategoryModule } from './category/category.module';
@@ -41,7 +40,6 @@ import { NotificationModule } from './notification/notification.module';
     UserModule,
     PostModule,
     GuideModule,
-    SafeZoneModule,
     AdviceModule,
     AdminModule,
     CategoryModule,

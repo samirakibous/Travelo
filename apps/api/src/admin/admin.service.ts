@@ -4,7 +4,6 @@ import { Model } from 'mongoose';
 import { User, UserDocument } from '../user/entities/user.entity';
 import { Post, PostDocument } from '../post/entities/post.entity';
 import { Advice, AdviceDocument } from '../advice/entities/advice.entity';
-import { SafeZone, SafeZoneDocument } from '../safety-zone/entities/safety-zone.entity';
 import { Review, ReviewDocument } from '../review/entities/review.entity';
 import { GuideProfile, GuideProfileDocument } from '../guide/entities/guide-profile.entity';
 import { Role } from '../auth/enums/role.enum';
@@ -15,29 +14,24 @@ export class AdminService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Post.name) private postModel: Model<PostDocument>,
     @InjectModel(Advice.name) private adviceModel: Model<AdviceDocument>,
-    @InjectModel(SafeZone.name) private safeZoneModel: Model<SafeZoneDocument>,
     @InjectModel(Review.name) private reviewModel: Model<ReviewDocument>,
     @InjectModel(GuideProfile.name) private guideModel: Model<GuideProfileDocument>,
   ) {}
 
   async getStats() {
-    const [totalUsers, activeUsers, totalPosts, reportedPosts, totalAdvices, totalZones, totalReviews] =
+    const [totalUsers, activeUsers, totalPosts, totalAdvices, totalReviews] =
       await Promise.all([
         this.userModel.countDocuments(),
         this.userModel.countDocuments({ isActive: true }),
         this.postModel.countDocuments(),
-        this.postModel.countDocuments({ 'reports.0': { $exists: true } }),
         this.adviceModel.countDocuments(),
-        this.safeZoneModel.countDocuments(),
         this.reviewModel.countDocuments(),
       ]);
 
     return {
       users: { total: totalUsers, active: activeUsers, banned: totalUsers - activeUsers },
       posts: totalPosts,
-      reportedPosts,
       advices: totalAdvices,
-      zones: totalZones,
       reviews: totalReviews,
     };
   }
