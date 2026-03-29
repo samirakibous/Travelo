@@ -44,7 +44,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               <span style={{
                 display: 'inline-block', marginTop: 4,
                 fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
-                textTransform: 'uppercase', color: rc.color, background: rc.bg,
+                textTransform: 'uppercase', color: rc?.color, background: rc?.bg,
                 padding: '2px 7px', borderRadius: 99,
               }}>
                 {user.role}

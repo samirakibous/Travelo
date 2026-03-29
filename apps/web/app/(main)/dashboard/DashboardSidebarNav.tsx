@@ -34,7 +34,7 @@ export default function DashboardSidebarNav({ role }: { role: string }) {
 
   return (
     <nav style={{ padding: '12px 10px', flex: 1 }}>
-      {items.map(({ href, icon: Icon, label }) => {
+      {items?.map(({ href, icon: Icon, label }) => {
         const active = pathname === href || pathname.startsWith(href + '/');
         return (
           <Link
