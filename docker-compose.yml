@@ -1,0 +1,51 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://db:27017/travelo
+      - JWT_SECRET=dev_secret_change_me_in_production
+      - JWT_EXPIRES_IN=1h
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - PORT=3000
+      - FRONTEND_URL=http://localhost:3001
+    depends_on:
+      - db
+    networks:
+      - travelo
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:3000/api
+      - API_INTERNAL_URL=http://api:3000/api
+    depends_on:
+      - api
+    networks:
+      - travelo
+
+  db:
+    image: mongo:latest
+    container_name: travelo-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - travelo
+
+volumes:
+  mongo_data:
+
+networks:
+  travelo:
+    driver: bridge

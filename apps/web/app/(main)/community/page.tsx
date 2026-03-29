@@ -4,7 +4,7 @@ import PostFeed from './PostFeed';
 
 export default async function CommunityPage() {
   const [{ data, total }, categories] = await Promise.all([
-    apiGetPosts({ sort: 'recent', limit: 10 }),
+    apiGetPosts({ limit: 10 }),
     apiGetCategories(),
   ]);
 

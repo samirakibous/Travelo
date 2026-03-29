@@ -2,26 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import L from 'leaflet';
-import { MapContainer, TileLayer, CircleMarker, Polygon, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Locate } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
-import type { SafeZone } from '../../../types/safety-zone';
 import type { Advice } from '../../../types/advice';
 import AdviceVoteButtons from '../../../components/AdviceVoteButtons';
-
-// ── Zone colors ──────────────────────────────────────────────
-const RISK_COLORS = {
-  safe:    { color: '#16a34a', fillColor: '#22c55e' },
-  caution: { color: '#d97706', fillColor: '#f59e0b' },
-  danger:  { color: '#dc2626', fillColor: '#ef4444' },
-} as const;
-
-const RISK_LABELS: Record<string, string> = { safe: 'Sûre', caution: 'Prudence', danger: 'Danger' };
-
-const ZONE_CATEGORY_LABELS: Record<string, string> = {
-  tourist: 'Touristique', transport: 'Transport',
-  accommodation: 'Hébergement', food: 'Restauration', general: 'Général',
-};
 
 // ── Advice type colors & icons ────────────────────────────────
 const ADVICE_TYPE_COLORS: Record<string, string> = {
@@ -43,10 +28,6 @@ const ADVICE_TYPE_SVG: Record<string, string> = {
   recommandation: '<path d="M9 12l2 2 4-4M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/>',
 };
 
-const ADVICE_CATEGORY_LABELS: Record<string, string> = {
-  safety: 'Sécurité', health: 'Santé', transport: 'Transport',
-  culture: 'Culture', emergency: 'Urgence',
-};
 
 function createAdviceIcon(advice: Advice): L.DivIcon {
   const color = ADVICE_TYPE_COLORS[advice.adviceType] ?? '#6b7280';
@@ -112,29 +93,6 @@ function LocateButton() {
   );
 }
 
-function ZonePopup({ zone }: { zone: SafeZone }) {
-  const style = RISK_COLORS[zone.riskLevel] ?? RISK_COLORS.safe;
-  return (
-    <Popup>
-      <div style={{ minWidth: 180 }}>
-        <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 4, color: '#1a1a2e' }}>{zone.name}</p>
-        {zone.description && <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 6 }}>{zone.description}</p>}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, fontWeight: 600, color: style.color, background: style.color + '22', padding: '2px 8px', borderRadius: 99 }}>
-            {RISK_LABELS[zone.riskLevel] ?? zone.riskLevel}
-          </span>
-          <span style={{ fontSize: 11, color: '#6b7280', background: '#f3f4f6', padding: '2px 8px', borderRadius: 99 }}>
-            {ZONE_CATEGORY_LABELS[zone.category] ?? zone.category}
-          </span>
-        </div>
-        <div style={{ marginTop: 6, fontSize: 11, color: '#9ca3af' }}>
-          {zone.activeDay && zone.activeNight ? 'Jour & Nuit' : zone.activeDay ? 'Jour uniquement' : 'Nuit uniquement'}
-        </div>
-      </div>
-    </Popup>
-  );
-}
-
 const API_URL = (process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')) ?? 'http://localhost:3000';
 
 function AdvicePopup({ advice }: { advice: Advice }) {
@@ -148,9 +106,6 @@ function AdvicePopup({ advice }: { advice: Advice }) {
             background: typeColor + '18', padding: '2px 8px', borderRadius: 99,
           }}>
             {ADVICE_TYPE_LABELS[advice.adviceType] ?? advice.adviceType}
-          </span>
-          <span style={{ fontSize: 11, color: '#6b7280', background: '#f3f4f6', padding: '2px 8px', borderRadius: 99 }}>
-            {ADVICE_CATEGORY_LABELS[advice.category] ?? advice.category}
           </span>
           {advice.isCertifiedGuide && (
             <span style={{ fontSize: 11, color: '#1a73e8', fontWeight: 600 }}>✓ Certifié</span>
@@ -185,12 +140,11 @@ function AdvicePopup({ advice }: { advice: Advice }) {
 
 // ── Main component ────────────────────────────────────────────
 type Props = {
-  zones: SafeZone[];
   advices: Advice[];
   loading?: boolean;
 };
 
-export default function SafetyMap({ zones, advices, loading }: Props) {
+export default function SafetyMap({ advices, loading }: Props) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -211,29 +165,6 @@ export default function SafetyMap({ zones, advices, loading }: Props) {
         <MapResizer />
         <GeolocationController />
         <LocateButton />
-
-        {/* Safety zones */}
-        {zones.map((zone) => {
-          const style = RISK_COLORS[zone.riskLevel] ?? RISK_COLORS.safe;
-
-          if (zone.type === 'point' && zone.lat !== undefined && zone.lng !== undefined) {
-            return (
-              <CircleMarker key={zone._id} center={[zone.lat, zone.lng]} radius={14}
-                pathOptions={{ color: style.color, fillColor: style.fillColor, fillOpacity: 0.4, weight: 2 }}>
-                <ZonePopup zone={zone} />
-              </CircleMarker>
-            );
-          }
-          if (zone.type === 'polygon' && zone.coordinates?.length) {
-            return (
-              <Polygon key={zone._id} positions={zone.coordinates.map((c) => [c.lat, c.lng] as [number, number])}
-                pathOptions={{ color: style.color, fillColor: style.fillColor, fillOpacity: 0.25, weight: 2 }}>
-                <ZonePopup zone={zone} />
-              </Polygon>
-            );
-          }
-          return null;
-        })}
 
         {/* Advice markers */}
         {advices.map((advice) => (

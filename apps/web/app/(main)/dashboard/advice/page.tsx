@@ -1,17 +1,15 @@
 'use client';
 
 import { useState, useTransition, useEffect } from 'react';
-import { Lightbulb, Plus, Trash2, MapPin, Shield, ChevronDown, ChevronUp } from 'lucide-react';
+import { Lightbulb, Plus, Trash2, MapPin, Shield, ChevronUp } from 'lucide-react';
 import { getMyAdvices, deleteAdvice } from '../../../../lib/advice';
 import CreateAdviceForm from './CreateAdviceForm';
 import type { Advice } from '../../../../types/advice';
 
-const CATEGORY_LABELS: Record<string, { label: string; color: string }> = {
-  safety:    { label: 'Sécurité',   color: '#dc2626' },
-  health:    { label: 'Santé',      color: '#16a34a' },
-  transport: { label: 'Transport',  color: '#2563eb' },
-  culture:   { label: 'Culture',    color: '#9333ea' },
-  emergency: { label: 'Urgence',    color: '#ea580c' },
+const ADVICE_TYPE_COLORS: Record<string, string> = {
+  danger:         '#dc2626',
+  prudence:       '#d97706',
+  recommandation: '#16a34a',
 };
 
 export default function AdviceDashboardPage() {
@@ -81,18 +79,18 @@ export default function AdviceDashboardPage() {
       ) : (
         <div className="flex flex-col gap-3">
           {advices.map((advice) => {
-            const cat = CATEGORY_LABELS[advice.category] ?? { label: advice.category, color: '#6b7280' };
+            const typeColor = ADVICE_TYPE_COLORS[advice.adviceType] ?? '#6b7280';
             return (
               <div key={advice._id} className="bg-white rounded-2xl border border-gray-100 p-4 flex gap-4">
                 {/* Color strip */}
-                <div className="w-1 rounded-full shrink-0" style={{ background: cat.color }} />
+                <div className="w-1 rounded-full shrink-0" style={{ background: typeColor }} />
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-md" style={{ color: cat.color, background: cat.color + '15' }}>
-                          {cat.label}
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-md" style={{ color: typeColor, background: typeColor + '15' }}>
+                          {advice.adviceType}
                         </span>
                         {advice.isCertifiedGuide && (
                           <span className="flex items-center gap-1 text-xs text-[#1a73e8] font-semibold">

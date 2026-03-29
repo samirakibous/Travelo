@@ -42,9 +42,6 @@ export class GuideProfile {
   @Prop({ default: false })
   isCertified!: boolean;
 
-  // Format: 'YYYY-MM-DD'
-  @Prop({ type: [String], default: [] })
-  availableDates!: string[];
 }
 
 export const GuideProfileSchema = SchemaFactory.createForClass(GuideProfile);

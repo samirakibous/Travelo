@@ -3,19 +3,14 @@ import type { Post } from '../types/post';
 
 // Appels authentifiés — Server Components et Server Actions uniquement
 
-export type UpdatePostPayload = {
-  title?: string;
-  description?: string;
-  destination?: string;
-  category?: string;
-};
-
 export async function apiUpdatePost(
   postId: string,
-  payload: UpdatePostPayload,
+  formData: FormData,
 ): Promise<Post> {
   const authApi = await getAuthApi();
-  const { data } = await authApi.patch<Post>(`/posts/${postId}`, payload);
+  const { data } = await authApi.patch<Post>(`/posts/${postId}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return data;
 }
 
@@ -41,7 +36,3 @@ export async function apiVotePost(
   return data;
 }
 
-export async function apiReportPost(postId: string, reason: string): Promise<void> {
-  const authApi = await getAuthApi();
-  await authApi.post(`/posts/${postId}/report`, { reason });
-}

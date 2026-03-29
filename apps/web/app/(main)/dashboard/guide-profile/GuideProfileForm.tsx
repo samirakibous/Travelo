@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Save, X, MapPin, DollarSign, BookOpen, Globe, Star, AlertCircle, CheckCircle, Briefcase, Award, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Save, X, MapPin, DollarSign, BookOpen, Globe, Star, AlertCircle, CheckCircle, Briefcase, Award } from 'lucide-react';
 import { createGuideProfile, updateGuideProfile } from '../../../../lib/guide';
 import type { GuideProfilePayload } from '../../../../lib/guide';
 import type { GuideProfile } from '../../../../types/guide';
@@ -14,9 +14,6 @@ const EXPERTISE_OPTIONS = [
 ] as const;
 
 const COMMON_LANGUAGES = ['Français', 'Anglais', 'Arabe', 'Espagnol', 'Allemand', 'Italien', 'Portugais', 'Mandarin'];
-
-const MONTH_NAMES = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-const DAY_NAMES = ['D','L','M','Me','J','V','S'];
 
 function Alert({ type, message }: { type: 'success' | 'error'; message: string }) {
   return (
@@ -119,10 +116,6 @@ export default function GuideProfileForm({
 }) {
   const isEdit = existing !== null;
 
-  const today = new Date();
-  const [calYear, setCalYear] = useState(today.getFullYear());
-  const [calMonth, setCalMonth] = useState(today.getMonth());
-
   const [form, setForm] = useState<GuideProfilePayload>({
     bio: existing?.bio ?? '',
     location: existing?.location ?? '',
@@ -132,22 +125,7 @@ export default function GuideProfileForm({
     specialties: existing?.specialties.map((s) => s._id) ?? [],
     languages: existing?.languages ?? [],
     expertiseLevel: existing?.expertiseLevel ?? 'local',
-    availableDates: existing?.availableDates ?? [],
   });
-
-  const toggleDate = (dateStr: string) => {
-    setForm((prev) => ({
-      ...prev,
-      availableDates: prev.availableDates.includes(dateStr)
-        ? prev.availableDates.filter((d) => d !== dateStr)
-        : [...prev.availableDates, dateStr],
-    }));
-  };
-
-  const firstDay = new Date(calYear, calMonth, 1).getDay();
-  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  const prevMonth = () => calMonth === 0 ? (setCalYear(y => y - 1), setCalMonth(11)) : setCalMonth(m => m - 1);
-  const nextMonth = () => calMonth === 11 ? (setCalYear(y => y + 1), setCalMonth(0)) : setCalMonth(m => m + 1);
 
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -314,64 +292,6 @@ export default function GuideProfileForm({
         placeholder="Tapez une langue et appuyez sur Entrée"
         suggestions={COMMON_LANGUAGES}
       />
-
-      {/* Disponibilités */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <Calendar size={16} color="#1a73e8" />
-          <label className="text-sm font-medium text-[#1a1a2e]">Dates disponibles</label>
-          {form.availableDates.length > 0 && (
-            <span className="text-xs text-[#1a73e8] font-medium bg-[#e8f0fe] px-2 py-0.5 rounded-full">
-              {form.availableDates.length} sélectionnée{form.availableDates.length > 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
-        <p className="text-xs text-gray-400">Cliquez sur les jours où vous êtes disponible</p>
-
-        <div className="border border-gray-200 rounded-xl p-4">
-          {/* Nav mois */}
-          <div className="flex items-center justify-between mb-3">
-            <button type="button" onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-              <ChevronLeft size={15} color="#666" />
-            </button>
-            <span className="text-sm font-semibold text-[#1a1a2e]">{MONTH_NAMES[calMonth]} {calYear}</span>
-            <button type="button" onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-              <ChevronRight size={15} color="#666" />
-            </button>
-          </div>
-
-          {/* En-têtes jours */}
-          <div className="grid grid-cols-7 gap-1 mb-1">
-            {DAY_NAMES.map((d, i) => (
-              <div key={i} className="text-center text-xs font-semibold text-gray-400">{d}</div>
-            ))}
-          </div>
-
-          {/* Grille jours */}
-          <div className="grid grid-cols-7 gap-1">
-            {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
-            {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
-              const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-              const isPast = new Date(calYear, calMonth, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-              const isSelected = form.availableDates.includes(dateStr);
-              const isToday = calYear === today.getFullYear() && calMonth === today.getMonth() && day === today.getDate();
-              return (
-                <button
-                  key={day}
-                  type="button"
-                  disabled={isPast}
-                  onClick={() => toggleDate(dateStr)}
-                  className={`aspect-square rounded-lg text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-default
-                    ${isSelected ? 'bg-[#1a73e8] text-white' : isToday ? 'border border-[#1a73e8] text-[#1a73e8]' : 'hover:bg-gray-100 text-gray-700'}
-                  `}
-                >
-                  {day}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
 
       <button
         type="submit"

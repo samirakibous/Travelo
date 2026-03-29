@@ -5,8 +5,6 @@ import {
   apiUpdatePost,
   apiDeletePost,
   apiVotePost,
-  apiReportPost,
-  type UpdatePostPayload,
 } from '../services/post.server.service';
 import { parseApiError } from '../services/api';
 import type { Post } from '../types/post';
@@ -26,10 +24,10 @@ export async function createPost(formData: FormData): Promise<ActionResult<Post>
 
 export async function updatePost(
   postId: string,
-  payload: UpdatePostPayload,
+  formData: FormData,
 ): Promise<ActionResult<Post>> {
   try {
-    const data = await apiUpdatePost(postId, payload);
+    const data = await apiUpdatePost(postId, formData);
     return { success: true, data };
   } catch (error) {
     return { success: false, error: parseApiError(error) };
@@ -57,11 +55,3 @@ export async function votePost(
   }
 }
 
-export async function reportPost(postId: string, reason: string): Promise<ActionResult> {
-  try {
-    await apiReportPost(postId, reason);
-    return { success: true, data: undefined };
-  } catch (error) {
-    return { success: false, error: parseApiError(error) };
-  }
-}

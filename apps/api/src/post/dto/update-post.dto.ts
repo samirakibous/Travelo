@@ -1,21 +1,4 @@
-import { IsMongoId, IsOptional, IsString, MaxLength } from 'class-validator';
+import { PartialType } from '@nestjs/swagger';
+import { CreatePostDto } from './create-post.dto';
 
-export class UpdatePostDto {
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  title?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  description?: string;
-
-  @IsOptional()
-  @IsString()
-  destination?: string;
-
-  @IsOptional()
-  @IsMongoId()
-  category?: string;
-}
+export class UpdatePostDto extends PartialType(CreatePostDto) {}

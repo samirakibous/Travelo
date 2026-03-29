@@ -21,9 +21,6 @@ export class AdviceService {
   async findAll(query: QueryAdviceDto) {
     const filter: Record<string, any> = {};
 
-    if (query.category) {
-      filter.category = { $in: query.category.split(',') };
-    }
     if (query.certifiedOnly === 'true') {
       filter.isCertifiedGuide = true;
     }
