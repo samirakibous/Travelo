@@ -13,6 +13,7 @@ type Props = {
   categories: Category[];
 };
 
+
 export default function CreatePostModal({ onClose, onCreated, editPost, categories }: Props) {
   const isEditing = !!editPost;
   const defaultCategory = editPost?.category._id ?? categories[0]?._id ?? '';
