@@ -9,7 +9,6 @@ import {
   Param,
   Patch,
   Post,
-  Query,
   Request,
   UploadedFiles,
   UseGuards,
@@ -31,7 +30,6 @@ import * as fs from 'fs';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { QueryPostDto } from './dto/query-post.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 interface AuthRequest extends ExpressRequest {
@@ -59,10 +57,10 @@ export class PostController {
   constructor(private readonly postService: PostService) {}
 
   @ApiOperation({ summary: 'Lister les publications' })
-  @ApiResponse({ status: 200, description: 'Liste paginée des publications' })
+  @ApiResponse({ status: 200, description: 'Liste des publications' })
   @Get()
-  findAll(@Query() query: QueryPostDto) {
-    return this.postService.findAll(query);
+  findAll() {
+    return this.postService.findAll();
   }
 
   @ApiOperation({ summary: 'Créer une publication' })

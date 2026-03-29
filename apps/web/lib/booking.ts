@@ -8,6 +8,26 @@ type ActionResult<T = void> =
   | { success: true; data: T }
   | { success: false; error: string };
 
+export async function getMyBookings(): Promise<Booking[]> {
+  try {
+    const authApi = await getAuthApi();
+    const { data } = await authApi.get<Booking[]>('/bookings/mine');
+    return data;
+  } catch {
+    return [];
+  }
+}
+
+export async function getIncomingBookings(): Promise<Booking[]> {
+  try {
+    const authApi = await getAuthApi();
+    const { data } = await authApi.get<Booking[]>('/bookings/incoming');
+    return data;
+  } catch {
+    return [];
+  }
+}
+
 export async function createBooking(
   guideId: string,
   payload: { date: string; message?: string },
