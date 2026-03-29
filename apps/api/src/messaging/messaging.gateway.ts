@@ -18,7 +18,9 @@ import { MessagingService } from './messaging.service';
   },
   namespace: '/messaging',
 })
-export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class MessagingGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server!: Server;
 
@@ -34,7 +36,7 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
         client.disconnect();
         return;
       }
-      const payload = this.jwtService.verify(token) as { sub: string };
+      const payload = this.jwtService.verify(token);
       client.data.userId = payload.sub;
       client.join(`user:${payload.sub}`);
     } catch {
@@ -42,7 +44,7 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
     }
   }
 
-  handleDisconnect(_client: Socket) {
+  handleDisconnect() {
     // cleanup handled by socket.io rooms automatically
   }
 
@@ -65,8 +67,11 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
       this.server.to(`user:${senderId}`).emit('new_message', message);
 
       // Fetch conversation to find recipient
-      const conversations = await this.messagingService.getConversations(senderId);
-      const conv = conversations.find((c: any) => c._id.toString() === data.conversationId);
+      const conversations =
+        await this.messagingService.getConversations(senderId);
+      const conv = conversations.find(
+        (c: any) => c._id.toString() === data.conversationId,
+      );
       if (conv) {
         const recipientId = this.messagingService.getRecipientId(
           conv as any,

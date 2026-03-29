@@ -6,7 +6,10 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { GuideProfile, GuideProfileDocument } from './entities/guide-profile.entity';
+import {
+  GuideProfile,
+  GuideProfileDocument,
+} from './entities/guide-profile.entity';
 import { CreateGuideProfileDto } from './dto/create-guide-profile.dto';
 import { QueryGuideDto } from './dto/query-guide.dto';
 import { Role } from '../auth/enums/role.enum';
@@ -67,9 +70,15 @@ export class GuideService {
     return guide;
   }
 
-  async createProfile(userId: string, userRole: string, dto: CreateGuideProfileDto) {
+  async createProfile(
+    userId: string,
+    userRole: string,
+    dto: CreateGuideProfileDto,
+  ) {
     if (userRole !== Role.GUIDE) {
-      throw new ForbiddenException('Seuls les guides peuvent créer un profil guide');
+      throw new ForbiddenException(
+        'Seuls les guides peuvent créer un profil guide',
+      );
     }
     const userOid = new Types.ObjectId(userId);
     const existing = await this.guideModel.findOne({ userId: userOid });
@@ -82,7 +91,9 @@ export class GuideService {
 
   async updateProfile(userId: string, dto: Partial<CreateGuideProfileDto>) {
     const profile = await this.guideModel
-      .findOneAndUpdate({ userId: new Types.ObjectId(userId) }, dto, { new: true })
+      .findOneAndUpdate({ userId: new Types.ObjectId(userId) }, dto, {
+        new: true,
+      })
       .populate('userId', 'firstName lastName profilePicture email')
       .populate('specialties');
     if (!profile) throw new NotFoundException('Profil guide introuvable');

@@ -3,7 +3,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { BookingService } from './booking.service';
 import { BookingController } from './booking.controller';
 import { Booking, BookingSchema } from './entities/booking.entity';
-import { GuideProfile, GuideProfileSchema } from '../guide/entities/guide-profile.entity';
+import {
+  GuideProfile,
+  GuideProfileSchema,
+} from '../guide/entities/guide-profile.entity';
 import { NotificationModule } from '../notification/notification.module';
 
 @Module({

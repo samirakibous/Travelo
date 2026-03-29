@@ -1,19 +1,34 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsMongoId, IsNumberString, IsOptional, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsMongoId,
+  IsNumberString,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { ExpertiseLevel } from '../enums/expertise-level.enum';
 
 export class QueryGuideDto {
-  @ApiPropertyOptional({ example: 'Paris', description: 'Filtrer par localisation' })
+  @ApiPropertyOptional({
+    example: 'Paris',
+    description: 'Filtrer par localisation',
+  })
   @IsOptional()
   @IsString()
   location?: string;
 
-  @ApiPropertyOptional({ enum: ExpertiseLevel, description: 'Niveau d\'expertise' })
+  @ApiPropertyOptional({
+    enum: ExpertiseLevel,
+    description: "Niveau d'expertise",
+  })
   @IsOptional()
   @IsEnum(ExpertiseLevel)
   expertiseLevel?: ExpertiseLevel;
 
-  @ApiPropertyOptional({ example: '64b8f1e2c3d4e5f6a7b8c9d0', description: 'Filtrer par spécialité (ID MongoDB)' })
+  @ApiPropertyOptional({
+    example: '64b8f1e2c3d4e5f6a7b8c9d0',
+    description: 'Filtrer par spécialité (ID MongoDB)',
+  })
   @IsOptional()
   @IsMongoId()
   specialty?: string;
@@ -38,7 +53,10 @@ export class QueryGuideDto {
   @IsNumberString()
   page?: string;
 
-  @ApiPropertyOptional({ example: '10', description: 'Nombre de résultats par page' })
+  @ApiPropertyOptional({
+    example: '10',
+    description: 'Nombre de résultats par page',
+  })
   @IsOptional()
   @IsNumberString()
   limit?: string;

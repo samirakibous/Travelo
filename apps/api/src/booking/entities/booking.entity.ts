@@ -19,7 +19,11 @@ export class Booking {
   @Prop({ maxlength: 500, default: '' })
   message!: string;
 
-  @Prop({ type: String, enum: ['pending', 'confirmed', 'rejected', 'cancelled'], default: 'pending' })
+  @Prop({
+    type: String,
+    enum: ['pending', 'confirmed', 'rejected', 'cancelled'],
+    default: 'pending',
+  })
   status!: BookingStatus;
 }
 

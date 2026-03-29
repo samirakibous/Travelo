@@ -3,7 +3,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { MessagingController } from './messaging.controller';
 import { MessagingService } from './messaging.service';
 import { MessagingGateway } from './messaging.gateway';
-import { Conversation, ConversationSchema } from './entities/conversation.entity';
+import {
+  Conversation,
+  ConversationSchema,
+} from './entities/conversation.entity';
 import { Message, MessageSchema } from './entities/message.entity';
 import { AuthModule } from '../auth/auth.module';
 import { NotificationModule } from '../notification/notification.module';

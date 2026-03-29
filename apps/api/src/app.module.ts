@@ -25,14 +25,18 @@ import { NotificationModule } from './notification/notification.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [
-        path.resolve(__dirname, `../.env.${process.env.NODE_ENV || 'development'}`),
+        path.resolve(
+          __dirname,
+          `../.env.${process.env.NODE_ENV || 'development'}`,
+        ),
         path.resolve(__dirname, '../.env'),
       ],
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGODB_URI') || process.env.MONGODB_URI,
+        uri:
+          configService.get<string>('MONGODB_URI') || process.env.MONGODB_URI,
       }),
       inject: [ConfigService],
     }),

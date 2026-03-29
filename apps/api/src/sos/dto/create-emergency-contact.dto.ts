@@ -10,7 +10,10 @@ export class CreateEmergencyContactDto {
   @IsString()
   phone!: string;
 
-  @ApiPropertyOptional({ example: 'Famille', description: 'Relation avec le contact' })
+  @ApiPropertyOptional({
+    example: 'Famille',
+    description: 'Relation avec le contact',
+  })
   @IsOptional()
   @IsString()
   relationship?: string;

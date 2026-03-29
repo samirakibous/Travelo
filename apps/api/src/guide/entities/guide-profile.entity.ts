@@ -41,7 +41,6 @@ export class GuideProfile {
 
   @Prop({ default: false })
   isCertified!: boolean;
-
 }
 
 export const GuideProfileSchema = SchemaFactory.createForClass(GuideProfile);

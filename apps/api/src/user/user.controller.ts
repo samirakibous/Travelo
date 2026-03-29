@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Body,
   Controller,
-  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -14,7 +13,14 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request as ExpressRequest } from 'express';
 import { diskStorage } from 'multer';
@@ -48,7 +54,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @ApiOperation({ summary: 'Obtenir mon profil' })
-  @ApiResponse({ status: 200, description: 'Profil de l\'utilisateur connecté' })
+  @ApiResponse({ status: 200, description: "Profil de l'utilisateur connecté" })
   @ApiResponse({ status: 401, description: 'Non authentifié' })
   @UseGuards(JwtAuthGuard)
   @Get('me')
@@ -79,7 +85,12 @@ export class UserController {
 
   @ApiOperation({ summary: 'Uploader mon avatar' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { avatar: { type: 'string', format: 'binary' } } } })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { avatar: { type: 'string', format: 'binary' } },
+    },
+  })
   @ApiResponse({ status: 200, description: 'Avatar mis à jour' })
   @ApiResponse({ status: 400, description: 'Fichier invalide' })
   @UseGuards(JwtAuthGuard)
@@ -91,7 +102,9 @@ export class UserController {
       fileFilter: (_req, file, cb) => {
         if (!file.mimetype.match(/^image\/(jpeg|png|webp)$/)) {
           return cb(
-            new BadRequestException('Seules les images JPEG, PNG et WebP sont acceptées'),
+            new BadRequestException(
+              'Seules les images JPEG, PNG et WebP sont acceptées',
+            ),
             false,
           );
         }
@@ -105,11 +118,17 @@ export class UserController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) throw new BadRequestException('Aucun fichier reçu');
-    return this.userService.updateAvatar(req.user.id, `/uploads/avatars/${file.filename}`);
+    return this.userService.updateAvatar(
+      req.user.id,
+      `/uploads/avatars/${file.filename}`,
+    );
   }
 
   @ApiOperation({ summary: 'Obtenir mes guides sauvegardés' })
-  @ApiResponse({ status: 200, description: 'Liste des IDs de guides sauvegardés' })
+  @ApiResponse({
+    status: 200,
+    description: 'Liste des IDs de guides sauvegardés',
+  })
   @UseGuards(JwtAuthGuard)
   @Get('me/saved-guides')
   getSavedGuideIds(@Request() req: AuthRequest) {

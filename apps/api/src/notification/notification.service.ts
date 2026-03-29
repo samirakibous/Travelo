@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Notification, NotificationDocument, NotificationType } from './entities/notification.entity';
+import {
+  Notification,
+  NotificationDocument,
+  NotificationType,
+} from './entities/notification.entity';
 
 @Injectable()
 export class NotificationService {
@@ -17,7 +21,12 @@ export class NotificationService {
     body: string;
     link: string;
   }) {
-    console.log('[NotifService] creating notification for userId:', payload.userId, 'type:', payload.type);
+    console.log(
+      '[NotifService] creating notification for userId:',
+      payload.userId,
+      'type:',
+      payload.type,
+    );
     await this.notifModel.create({
       user: new Types.ObjectId(payload.userId),
       type: payload.type,

@@ -8,7 +8,13 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiBody,
+} from '@nestjs/swagger';
 import { Request as ExpressRequest } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -43,7 +49,10 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Se connecter' })
-  @ApiResponse({ status: 200, description: 'Connexion réussie, retourne les tokens JWT' })
+  @ApiResponse({
+    status: 200,
+    description: 'Connexion réussie, retourne les tokens JWT',
+  })
   @ApiResponse({ status: 401, description: 'Identifiants invalides' })
   @HttpCode(HttpStatus.OK)
   @Post('login')
@@ -51,8 +60,16 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  @ApiOperation({ summary: 'Rafraîchir le token d\'accès' })
-  @ApiBody({ schema: { properties: { userId: { type: 'string' }, refreshToken: { type: 'string' } }, required: ['userId', 'refreshToken'] } })
+  @ApiOperation({ summary: "Rafraîchir le token d'accès" })
+  @ApiBody({
+    schema: {
+      properties: {
+        userId: { type: 'string' },
+        refreshToken: { type: 'string' },
+      },
+      required: ['userId', 'refreshToken'],
+    },
+  })
   @ApiResponse({ status: 200, description: 'Nouveaux tokens retournés' })
   @ApiResponse({ status: 401, description: 'Refresh token invalide ou expiré' })
   @HttpCode(HttpStatus.OK)
@@ -63,7 +80,12 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Se déconnecter' })
-  @ApiBody({ schema: { properties: { userId: { type: 'string' } }, required: ['userId'] } })
+  @ApiBody({
+    schema: {
+      properties: { userId: { type: 'string' } },
+      required: ['userId'],
+    },
+  })
   @ApiResponse({ status: 200, description: 'Déconnexion réussie' })
   @HttpCode(HttpStatus.OK)
   @Post('logout')
@@ -72,9 +94,12 @@ export class AuthController {
     return this.authService.logout(userId);
   }
 
-  @ApiOperation({ summary: 'Obtenir l\'utilisateur connecté' })
+  @ApiOperation({ summary: "Obtenir l'utilisateur connecté" })
   @ApiBearerAuth('JWT')
-  @ApiResponse({ status: 200, description: 'Informations de l\'utilisateur connecté' })
+  @ApiResponse({
+    status: 200,
+    description: "Informations de l'utilisateur connecté",
+  })
   @ApiResponse({ status: 401, description: 'Non authentifié' })
   @UseGuards(JwtAuthGuard)
   @Get('me')

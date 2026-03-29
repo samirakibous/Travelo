@@ -25,7 +25,6 @@ export class Post {
 
   @Prop({ type: [String], default: [] })
   mediaUrls!: string[];
-
 }
 
 export const PostSchema = SchemaFactory.createForClass(Post);

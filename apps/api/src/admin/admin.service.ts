@@ -5,7 +5,10 @@ import { User, UserDocument } from '../user/entities/user.entity';
 import { Post, PostDocument } from '../post/entities/post.entity';
 import { Advice, AdviceDocument } from '../advice/entities/advice.entity';
 import { Review, ReviewDocument } from '../review/entities/review.entity';
-import { GuideProfile, GuideProfileDocument } from '../guide/entities/guide-profile.entity';
+import {
+  GuideProfile,
+  GuideProfileDocument,
+} from '../guide/entities/guide-profile.entity';
 import { Role } from '../auth/enums/role.enum';
 
 @Injectable()
@@ -15,7 +18,8 @@ export class AdminService {
     @InjectModel(Post.name) private postModel: Model<PostDocument>,
     @InjectModel(Advice.name) private adviceModel: Model<AdviceDocument>,
     @InjectModel(Review.name) private reviewModel: Model<ReviewDocument>,
-    @InjectModel(GuideProfile.name) private guideModel: Model<GuideProfileDocument>,
+    @InjectModel(GuideProfile.name)
+    private guideModel: Model<GuideProfileDocument>,
   ) {}
 
   async getStats() {
@@ -29,7 +33,11 @@ export class AdminService {
       ]);
 
     return {
-      users: { total: totalUsers, active: activeUsers, banned: totalUsers - activeUsers },
+      users: {
+        total: totalUsers,
+        active: activeUsers,
+        banned: totalUsers - activeUsers,
+      },
       posts: totalPosts,
       advices: totalAdvices,
       reviews: totalReviews,
@@ -61,11 +69,9 @@ export class AdminService {
   }
 
   async updateUserRole(userId: string, role: Role) {
-    const user = await this.userModel.findByIdAndUpdate(
-      userId,
-      { role },
-      { new: true },
-    ).select('-password -currentHashedRefreshToken');
+    const user = await this.userModel
+      .findByIdAndUpdate(userId, { role }, { new: true })
+      .select('-password -currentHashedRefreshToken');
     if (!user) throw new NotFoundException('Utilisateur introuvable');
     return user;
   }
@@ -133,7 +139,10 @@ export class AdminService {
         .populate({
           path: 'guideId',
           select: 'userId',
-          populate: { path: 'userId', select: 'firstName lastName profilePicture' },
+          populate: {
+            path: 'userId',
+            select: 'firstName lastName profilePicture',
+          },
         })
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
@@ -154,7 +163,8 @@ export class AdminService {
     // Recalculate guide rating
     const remaining = await this.reviewModel.find({ guideId }).lean();
     const count = remaining.length;
-    const avg = count > 0 ? remaining.reduce((sum, r) => sum + r.rating, 0) / count : 0;
+    const avg =
+      count > 0 ? remaining.reduce((sum, r) => sum + r.rating, 0) / count : 0;
     await this.guideModel.findByIdAndUpdate(guideId, {
       rating: Math.round(avg * 10) / 10,
       reviewCount: count,

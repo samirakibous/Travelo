@@ -2,8 +2,14 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { GuideService } from './guide.service';
 import { GuideController } from './guide.controller';
-import { GuideProfile, GuideProfileSchema } from './entities/guide-profile.entity';
-import { Specialty, SpecialtySchema } from '../specialty/entities/specialty.entity';
+import {
+  GuideProfile,
+  GuideProfileSchema,
+} from './entities/guide-profile.entity';
+import {
+  Specialty,
+  SpecialtySchema,
+} from '../specialty/entities/specialty.entity';
 
 @Module({
   imports: [

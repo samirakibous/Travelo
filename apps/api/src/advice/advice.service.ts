@@ -6,7 +6,10 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Advice, AdviceDocument } from './entities/advice.entity';
-import { GuideProfile, GuideProfileDocument } from '../guide/entities/guide-profile.entity';
+import {
+  GuideProfile,
+  GuideProfileDocument,
+} from '../guide/entities/guide-profile.entity';
 import { CreateAdviceDto } from './dto/create-advice.dto';
 import { QueryAdviceDto } from './dto/query-advice.dto';
 import { Role } from '../auth/enums/role.enum';
@@ -15,7 +18,8 @@ import { Role } from '../auth/enums/role.enum';
 export class AdviceService {
   constructor(
     @InjectModel(Advice.name) private adviceModel: Model<AdviceDocument>,
-    @InjectModel(GuideProfile.name) private guideProfileModel: Model<GuideProfileDocument>,
+    @InjectModel(GuideProfile.name)
+    private guideProfileModel: Model<GuideProfileDocument>,
   ) {}
 
   async findAll(query: QueryAdviceDto) {
@@ -75,19 +79,23 @@ export class AdviceService {
     if (!advice) throw new NotFoundException('Conseil introuvable');
 
     const uid = new Types.ObjectId(userId);
-    const hasUseful    = advice.usefulVotes.some((v) => v.equals(uid));
+    const hasUseful = advice.usefulVotes.some((v) => v.equals(uid));
     const hasNotUseful = advice.notUsefulVotes.some((v) => v.equals(uid));
 
     if (type === 'useful') {
       if (hasUseful) {
         advice.usefulVotes = advice.usefulVotes.filter((v) => !v.equals(uid));
       } else {
-        advice.notUsefulVotes = advice.notUsefulVotes.filter((v) => !v.equals(uid));
+        advice.notUsefulVotes = advice.notUsefulVotes.filter(
+          (v) => !v.equals(uid),
+        );
         advice.usefulVotes.push(uid);
       }
     } else {
       if (hasNotUseful) {
-        advice.notUsefulVotes = advice.notUsefulVotes.filter((v) => !v.equals(uid));
+        advice.notUsefulVotes = advice.notUsefulVotes.filter(
+          (v) => !v.equals(uid),
+        );
       } else {
         advice.usefulVotes = advice.usefulVotes.filter((v) => !v.equals(uid));
         advice.notUsefulVotes.push(uid);
@@ -96,11 +104,11 @@ export class AdviceService {
 
     await advice.save();
 
-    const newHasUseful    = advice.usefulVotes.some((v) => v.equals(uid));
+    const newHasUseful = advice.usefulVotes.some((v) => v.equals(uid));
     const newHasNotUseful = advice.notUsefulVotes.some((v) => v.equals(uid));
 
     return {
-      usefulVotes:    advice.usefulVotes.length,
+      usefulVotes: advice.usefulVotes.length,
       notUsefulVotes: advice.notUsefulVotes.length,
       userVote: newHasUseful ? 'useful' : newHasNotUseful ? 'not_useful' : null,
     };

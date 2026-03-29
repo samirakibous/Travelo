@@ -3,7 +3,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AdviceService } from './advice.service';
 import { AdviceController } from './advice.controller';
 import { Advice, AdviceSchema } from './entities/advice.entity';
-import { GuideProfile, GuideProfileSchema } from '../guide/entities/guide-profile.entity';
+import {
+  GuideProfile,
+  GuideProfileSchema,
+} from '../guide/entities/guide-profile.entity';
 
 @Module({
   imports: [

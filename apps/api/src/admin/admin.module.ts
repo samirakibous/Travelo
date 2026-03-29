@@ -6,7 +6,10 @@ import { User, UserSchema } from '../user/entities/user.entity';
 import { Post, PostSchema } from '../post/entities/post.entity';
 import { Advice, AdviceSchema } from '../advice/entities/advice.entity';
 import { Review, ReviewSchema } from '../review/entities/review.entity';
-import { GuideProfile, GuideProfileSchema } from '../guide/entities/guide-profile.entity';
+import {
+  GuideProfile,
+  GuideProfileSchema,
+} from '../guide/entities/guide-profile.entity';
 
 @Module({
   imports: [

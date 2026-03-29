@@ -18,4 +18,5 @@ export class EmergencyContact {
   relationship?: string;
 }
 
-export const EmergencyContactSchema = SchemaFactory.createForClass(EmergencyContact);
+export const EmergencyContactSchema =
+  SchemaFactory.createForClass(EmergencyContact);
