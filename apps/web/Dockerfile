@@ -1,16 +1,19 @@
 FROM node:22-alpine
 
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+
 WORKDIR /app
 
-# Copier les fichiers workspace (obligatoire : web dépend de packages/@repo/*)
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY packages ./packages
 COPY apps/web/package.json ./apps/web/
 
-RUN corepack enable && corepack prepare pnpm@9.0.0 --activate && pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 COPY apps/web ./apps/web
 
 EXPOSE 3001
 
-CMD ["pnpm", "--filter", "web", "dev"]
+WORKDIR /app/apps/web
+
+CMD ["pnpm", "exec", "next", "dev", "--port", "3001"]

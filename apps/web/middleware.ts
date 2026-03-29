@@ -4,115 +4,88 @@ import type { NextRequest } from 'next/server';
 const publicRoutes = ['/login', '/register'];
 const protectedRoutes = ['/dashboard', '/profile', '/admin', '/community', '/guides'];
 
-function decodeJwtPayload(token: string): { sub: string; exp: number; role?: string } | null {
+function decode(token: string | undefined) {
+  if (!token) return null;
   try {
-    const base64Url = token.split('.')[1];
-    if (!base64Url) return null;
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(atob(base64));
+    const part = token.split('.')[1];
+    if (!part) return null;
+    return JSON.parse(atob(part));
   } catch {
     return null;
   }
 }
 
-function isTokenExpired(token: string): boolean {
-  const payload = decodeJwtPayload(token);
-  if (!payload) return true;
-  return payload.exp * 1000 < Date.now();
+function isExpired(token: string | undefined) {
+  if (!token) return true;
+  const payload = decode(token);
+  return !payload || payload.exp * 1000 < Date.now();
 }
 
-async function attemptRefresh(
-  request: NextRequest,
-): Promise<{ accessToken: string; refreshToken: string } | null> {
+async function refresh(request: NextRequest) {
   const refreshToken = request.cookies.get('refresh_token')?.value;
-  if (!refreshToken || isTokenExpired(refreshToken)) return null;
+  if (!refreshToken || isExpired(refreshToken)) return null;
 
-  const payload = decodeJwtPayload(refreshToken);
+  const payload = decode(refreshToken);
   if (!payload) return null;
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
   try {
-    const res = await fetch(`${apiUrl}/auth/refresh`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: payload.sub, refreshToken }),
     });
-    if (!res.ok) return null;
-    return await res.json();
+    return res.ok ? res.json() : null;
   } catch {
     return null;
   }
 }
 
-function applyTokenCookies(
-  response: NextResponse,
-  accessToken: string,
-  refreshToken: string,
-): NextResponse {
+function setCookies(res: NextResponse, access: string, refresh: string) {
   const isProd = process.env.NODE_ENV === 'production';
-  response.cookies.set('access_token', accessToken, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'lax',
-    maxAge: 59 * 60,
-    path: '/',
-  });
-  response.cookies.set('refresh_token', refreshToken, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60,
-    path: '/',
-  });
-  return response;
+
+  res.cookies.set('access_token', access, { httpOnly: true, secure: isProd, path: '/' });
+  res.cookies.set('refresh_token', refresh, { httpOnly: true, secure: isProd, path: '/' });
+
+  return res;
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const accessToken = request.cookies.get('access_token')?.value;
+
   const isPublic = publicRoutes.includes(pathname);
-  const isProtected = protectedRoutes.some((r) => pathname.startsWith(r));
+  const isProtected = protectedRoutes.some(r => pathname.startsWith(r));
 
-  const addPathname = (res: NextResponse) => {
-    res.headers.set('x-pathname', pathname);
-    return res;
-  };
-
-  // Token valide → logique normale
-  if (accessToken && !isTokenExpired(accessToken)) {
+  // 1. Token valide
+  if (!isExpired(accessToken)) {
     if (isPublic) {
-      const role = decodeJwtPayload(accessToken)?.role;
-      const dest = role === 'admin' ? '/admin' : '/dashboard';
-      return addPathname(NextResponse.redirect(new URL(dest, request.url)));
+      const role = decode(accessToken)?.role;
+      return NextResponse.redirect(new URL(role === 'admin' ? '/admin' : '/dashboard', request.url));
     }
-    return addPathname(NextResponse.next());
+    return NextResponse.next();
   }
 
-  // Token expiré ou absent → tenter un refresh
-  const newTokens = await attemptRefresh(request);
+  // 2. Try refresh
+  const tokens = await refresh(request);
 
-  if (newTokens) {
-    if (isPublic) {
-      const role = decodeJwtPayload(newTokens.accessToken)?.role;
-      const dest = role === 'admin' ? '/admin' : '/dashboard';
-      return addPathname(applyTokenCookies(
-        NextResponse.redirect(new URL(dest, request.url)),
-        newTokens.accessToken,
-        newTokens.refreshToken,
-      ));
-    }
-    return addPathname(applyTokenCookies(NextResponse.next(), newTokens.accessToken, newTokens.refreshToken));
+  if (tokens) {
+    const role = decode(tokens.accessToken)?.role;
+    const res = isPublic
+      ? NextResponse.redirect(new URL(role === 'admin' ? '/admin' : '/dashboard', request.url))
+      : NextResponse.next();
+
+    return setCookies(res, tokens.accessToken, tokens.refreshToken);
   }
 
-  // Aucun token valide
+  // 3. Pas authentifié
   if (isProtected) {
-    const response = NextResponse.redirect(new URL('/login', request.url));
-    response.cookies.delete('access_token');
-    response.cookies.delete('refresh_token');
-    return response;
+    const res = NextResponse.redirect(new URL('/login', request.url));
+    res.cookies.delete('access_token');
+    res.cookies.delete('refresh_token');
+    return res;
   }
 
-  return addPathname(NextResponse.next());
+  return NextResponse.next();
 }
 
 export const config = {

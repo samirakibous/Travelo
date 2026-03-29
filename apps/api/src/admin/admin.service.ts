@@ -53,8 +53,7 @@ export class AdminService {
         .select('-password -currentHashedRefreshToken')
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
-        .limit(limit)
-        .lean(),
+        .limit(limit),
       this.userModel.countDocuments(query),
     ]);
 

@@ -1,15 +1,13 @@
 FROM node:22-alpine
 
-RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
-
 WORKDIR /app
 
-COPY package*.json ./
+COPY apps/api/package.json ./
 
-RUN pnpm install
+RUN npm install --legacy-peer-deps
 
-COPY . .
+COPY apps/api .
 
 EXPOSE 3000
 
-CMD ["pnpm", "run", "start:dev"]
+CMD ["npx", "nest", "start", "--watch"]
