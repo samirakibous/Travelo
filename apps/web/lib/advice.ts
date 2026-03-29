@@ -2,7 +2,7 @@
 
 import { getAuthApi } from '../services/api.server';
 import { parseApiError } from '../services/api';
-import type { Advice } from '../types/advice';
+import type { Advice, AdviceQuery } from '../types/advice';
 
 type ActionResult<T = void> =
   | { success: true; data: T }
@@ -53,6 +53,26 @@ export async function getMyAdvices(): Promise<Advice[]> {
     return data;
   } catch {
     return [];
+  }
+}
+
+export async function getAdvices(query: AdviceQuery = {}): Promise<Advice[]> {
+  try {
+    const authApi = await getAuthApi();
+    const { data } = await authApi.get<Advice[]>('/advices', { params: query });
+    return data;
+  } catch {
+    return [];
+  }
+}
+
+export async function getAdvice(id: string): Promise<Advice | null> {
+  try {
+    const authApi = await getAuthApi();
+    const { data } = await authApi.get<Advice>(`/advices/${id}`);
+    return data;
+  } catch {
+    return null;
   }
 }
 

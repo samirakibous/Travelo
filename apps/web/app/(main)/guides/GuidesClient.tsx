@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { LayoutGrid, List } from 'lucide-react';
-import { apiGetGuides } from '../../../services/guide.service';
+import { getGuides } from '../../../lib/guide';
 import FilterSidebar from './FilterSidebar';
 import GuideCard from './GuideCard';
 import type { GuideProfile, GuideQuery } from '../../../types/guide';
@@ -24,7 +24,7 @@ export default function GuidesClient({ initialGuides, initialTotal, specialties 
   const applyFilters = (newFilters: GuideQuery) => {
     setFilters(newFilters);
     startTransition(async () => {
-      const result = await apiGetGuides(newFilters);
+      const result = await getGuides(newFilters);
       setGuides(result.data);
       setTotal(result.total);
     });
@@ -35,7 +35,7 @@ export default function GuidesClient({ initialGuides, initialTotal, specialties 
     const newFilters = { ...filters, page: nextPage };
     setFilters(newFilters);
     startTransition(async () => {
-      const result = await apiGetGuides(newFilters);
+      const result = await getGuides(newFilters);
       setGuides((prev) => [...prev, ...result.data]);
       setTotal(result.total);
     });

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getUser } from '../../../../lib/getUser';
 import { getMyGuideProfile } from '../../../../lib/guide';
-import { apiGetSpecialties } from '../../../../services/specialty.service';
+import { getSpecialties } from '../../../../lib/specialty';
 import ProfileClient from './ProfileClient';
 
 export default async function ProfilePage() {
@@ -10,7 +10,7 @@ export default async function ProfilePage() {
 
   const [guideProfile, availableSpecialties] = await Promise.all([
     user.role === 'guide' ? getMyGuideProfile() : Promise.resolve(null),
-    user.role === 'guide' ? apiGetSpecialties() : Promise.resolve([]),
+    user.role === 'guide' ? getSpecialties() : Promise.resolve([]),
   ]);
 
   return <ProfileClient initialUser={user} guideProfile={guideProfile} availableSpecialties={availableSpecialties} />;

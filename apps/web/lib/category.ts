@@ -4,6 +4,12 @@ import { getAuthApi } from '../services/api.server';
 import { parseApiError } from '../services/api';
 import type { Category } from '../types/category';
 
+export async function getCategories(): Promise<Category[]> {
+  const authApi = await getAuthApi();
+  const { data } = await authApi.get<Category[]>('/categories');
+  return data;
+}
+
 export async function adminCreateCategory(
   payload: { name: string; color?: string },
 ): Promise<{ success: true; data: Category } | { success: false; error: string }> {

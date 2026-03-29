@@ -2,11 +2,17 @@
 
 import { getAuthApi } from '../services/api.server';
 import { parseApiError } from '../services/api';
-import type { Post } from '../types/post';
+import type { Post, PostsResponse } from '../types/post';
 
 type ActionResult<T = void> =
   | { success: true; data: T }
   | { success: false; error: string };
+
+export async function getPosts(): Promise<PostsResponse> {
+  const authApi = await getAuthApi();
+  const { data } = await authApi.get<PostsResponse>('/posts');
+  return data;
+}
 
 export async function createPost(formData: FormData): Promise<ActionResult<Post>> {
   try {

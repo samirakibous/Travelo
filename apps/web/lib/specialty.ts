@@ -37,3 +37,9 @@ export async function adminDeleteSpecialty(id: string): Promise<ActionResult> {
     return { success: false, error: parseApiError(error) };
   }
 }
+
+export async function getSpecialties(): Promise<Specialty[]> {
+  const authApi = await getAuthApi();
+  const { data } = await authApi.get<Specialty[]>('/specialties');
+  return data;
+}

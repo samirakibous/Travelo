@@ -2,7 +2,7 @@
 
 import { getAuthApi } from '../services/api.server';
 import { parseApiError } from '../services/api';
-import type { GuideProfile } from '../types/guide';
+import type { GuideProfile, GuidesResponse, GuideQuery } from '../types/guide';
 
 type ActionResult<T = void> =
   | { success: true; data: T }
@@ -51,4 +51,16 @@ export async function getMyGuideProfile(): Promise<GuideProfile | null> {
   } catch {
     return null;
   }
+}
+
+export async function getGuides(params?: GuideQuery): Promise<GuidesResponse> {
+  const authApi = await getAuthApi();
+  const { data } = await authApi.get<GuidesResponse>('/guides', { params });
+  return data;
+}
+
+export async function getGuide(id: string): Promise<GuideProfile> {
+  const authApi = await getAuthApi();
+  const { data } = await authApi.get<GuideProfile>(`/guides/${id}`);
+  return data;
 }
