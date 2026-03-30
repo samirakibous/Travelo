@@ -37,8 +37,6 @@ jest.mock('bcrypt', () => ({
 describe('AuthService', () => {
   let service: AuthService;
   let userModel: any;
-  let jwtService: JwtService;
-  let configService: ConfigService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -52,8 +50,6 @@ describe('AuthService', () => {
 
     service = module.get<AuthService>(AuthService);
     userModel = module.get(getModelToken('User'));
-    jwtService = module.get(JwtService);
-    configService = module.get(ConfigService);
   });
 
   it('should be defined', () => {

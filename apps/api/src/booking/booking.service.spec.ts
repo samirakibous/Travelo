@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BookingService } from './booking.service';
 import { getModelToken } from '@nestjs/mongoose';
 import { NotificationService } from '../notification/notification.service';
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 const mockBookingModel = () => ({
   findById: jest.fn(),
@@ -22,7 +22,6 @@ describe('BookingService', () => {
   let service: BookingService;
   let bookingModel: any;
   let guideModel: any;
-  let notifService: any;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -37,7 +36,6 @@ describe('BookingService', () => {
     service = module.get<BookingService>(BookingService);
     bookingModel = module.get(getModelToken('Booking'));
     guideModel = module.get(getModelToken('GuideProfile'));
-    notifService = module.get(NotificationService);
   });
 
   it('should be defined', () => {

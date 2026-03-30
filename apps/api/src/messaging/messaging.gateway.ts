@@ -38,7 +38,7 @@ export class MessagingGateway
       }
       const payload = this.jwtService.verify(token);
       client.data.userId = payload.sub;
-      client.join(`user:${payload.sub}`);
+      await client.join(`user:${payload.sub}`);
     } catch {
       client.disconnect();
     }
