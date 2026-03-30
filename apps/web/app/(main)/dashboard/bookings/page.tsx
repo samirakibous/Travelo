@@ -1,4 +1,4 @@
-import { apiGetMyBookings, apiGetIncomingBookings } from '../../../../services/booking.service';
+import { getMyBookings, getIncomingBookings } from '../../../../lib/booking';
 import { getUser } from '../../../../lib/getUser';
 import BookingsClient from './BookingsClient';
 
@@ -9,8 +9,8 @@ export default async function BookingsPage() {
   const isGuide = user?.role === 'guide';
 
   const [myBookings, incomingBookings] = await Promise.all([
-    isGuide ? [] : apiGetMyBookings(),
-    isGuide ? apiGetIncomingBookings() : [],
+    isGuide ? [] : getMyBookings(),
+    isGuide ? getIncomingBookings() : [],
   ]);
 
   return (

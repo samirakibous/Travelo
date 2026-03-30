@@ -33,3 +33,9 @@ export async function deleteReview(
     return { success: false, error: parseApiError(error) };
   }
 }
+
+export async function getReviews(guideId: string): Promise<Review[]> {
+  const authApi = await getAuthApi();
+  const { data } = await authApi.get<Review[]>(`/guides/${guideId}/reviews`);
+  return data;
+}

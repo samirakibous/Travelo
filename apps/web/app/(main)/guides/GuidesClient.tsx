@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition } from 'react';
 import { LayoutGrid, List } from 'lucide-react';
-import { apiGetGuides } from '../../../services/guide.service';
+import { getGuides } from '../../../lib/guide';
 import FilterSidebar from './FilterSidebar';
 import GuideCard from './GuideCard';
-import { useAuth } from '../../../contexts/AuthContext';
-import { getSavedGuideIds } from '../../../lib/favorites';
 import type { GuideProfile, GuideQuery } from '../../../types/guide';
 import type { Specialty } from '../../../types/specialty';
 
@@ -17,23 +15,16 @@ type Props = {
 };
 
 export default function GuidesClient({ initialGuides, initialTotal, specialties }: Props) {
-  const { user } = useAuth();
   const [guides, setGuides] = useState(initialGuides);
   const [total, setTotal] = useState(initialTotal);
   const [filters, setFilters] = useState<GuideQuery>({ page: 1, limit: 12 });
   const [view, setView] = useState<'grid' | 'list'>('grid');
-  const [savedIds, setSavedIds] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    if (!user) return;
-    getSavedGuideIds().then(setSavedIds);
-  }, [user]);
 
   const applyFilters = (newFilters: GuideQuery) => {
     setFilters(newFilters);
     startTransition(async () => {
-      const result = await apiGetGuides(newFilters);
+      const result = await getGuides(newFilters);
       setGuides(result.data);
       setTotal(result.total);
     });
@@ -44,7 +35,7 @@ export default function GuidesClient({ initialGuides, initialTotal, specialties 
     const newFilters = { ...filters, page: nextPage };
     setFilters(newFilters);
     startTransition(async () => {
-      const result = await apiGetGuides(newFilters);
+      const result = await getGuides(newFilters);
       setGuides((prev) => [...prev, ...result.data]);
       setTotal(result.total);
     });
@@ -97,16 +88,7 @@ export default function GuidesClient({ initialGuides, initialTotal, specialties 
             }
           >
             {guides.map((guide) => (
-              <GuideCard
-                key={guide._id}
-                guide={guide}
-                isSaved={savedIds.includes(guide._id)}
-                onSaveToggle={(id, saved) =>
-                  setSavedIds((prev) =>
-                    saved ? [...prev, id] : prev.filter((s) => s !== id),
-                  )
-                }
-              />
+              <GuideCard key={guide._id} guide={guide} />
             ))}
           </div>
         )}

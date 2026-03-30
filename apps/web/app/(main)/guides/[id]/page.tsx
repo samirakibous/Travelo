@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
-import { apiGetGuide } from '../../../../services/guide.service';
-import { apiGetAdvices } from '../../../../services/advice.service';
-import { apiGetReviews } from '../../../../services/review.service';
+import { getGuide } from '../../../../lib/guide';
+import { getAdvices } from '../../../../lib/advice';
+import { getReviews } from '../../../../lib/review';
 import { getUser } from '../../../../lib/getUser';
 import GuideProfileClient from './GuideProfileClient';
 
@@ -14,14 +14,14 @@ export default async function GuideProfilePage({ params }: Props) {
 
   let guide;
   try {
-    guide = await apiGetGuide(id);
+    guide = await getGuide(id);
   } catch {
     notFound();
   }
 
   const [advices, reviews, user] = await Promise.all([
-    apiGetAdvices({ authorId: guide.userId._id }).catch(() => []),
-    apiGetReviews(id).catch(() => []),
+    getAdvices({ authorId: guide.userId._id }).catch(() => []),
+    getReviews(id).catch(() => []),
     getUser(),
   ]);
 

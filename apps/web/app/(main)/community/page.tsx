@@ -1,12 +1,13 @@
-import { apiGetPosts } from '../../../services/post.service';
-import { apiGetCategories } from '../../../services/category.service';
+import { getPosts } from '../../../lib/post';
+import { getCategories } from '../../../lib/category';
 import PostFeed from './PostFeed';
 
 export default async function CommunityPage() {
   const [{ data, total }, categories] = await Promise.all([
-    apiGetPosts({ limit: 10 }),
-    apiGetCategories(),
+    getPosts(),
+    getCategories(),
   ]);
-
-  return <PostFeed initialPosts={data} initialTotal={total} categories={categories} />;
+  return (
+    <PostFeed initialPosts={data} initialTotal={total} categories={categories} />
+  );
 }

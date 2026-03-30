@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useState, useTransition, useEffect } from 'react';
 import { Shield } from 'lucide-react';
-import { apiGetAdvices } from '../../../services/advice.service';
+import { getAdvices } from '../../../lib/advice';
 import FilterPanel from './FilterPanel';
 import type { Advice, AdviceType } from '../../../types/advice';
 
@@ -20,7 +20,7 @@ export default function MapPage() {
 
   useEffect(() => {
     startTransition(async () => {
-      const data = await apiGetAdvices({});
+      const data = await getAdvices({});
       setAdvices(data);
     });
   }, []);
@@ -28,7 +28,7 @@ export default function MapPage() {
   const handleAdviceTypeChange = (types: AdviceType[]) => {
     setAdviceTypeFilter(types);
     startTransition(async () => {
-      const data = await apiGetAdvices(
+      const data = await getAdvices(
         types.length > 0 ? { adviceType: types.join(',') } : {},
       );
       setAdvices(data);

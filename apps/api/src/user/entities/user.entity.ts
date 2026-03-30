@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
 import { Role } from '../../auth/enums/role.enum';
 
 export type UserDocument = HydratedDocument<User>;
@@ -30,8 +30,6 @@ export class User {
   @Prop({ default: true })
   isActive!: boolean;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'GuideProfile' }], default: [] })
-  savedGuides!: Types.ObjectId[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

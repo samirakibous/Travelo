@@ -1,6 +1,6 @@
 import { adminGetStats, adminGetUsers, adminGetPosts, adminGetAdvices, adminGetReviews } from '../../../lib/admin';
-import { apiGetCategories } from '../../../services/category.service';
-import { apiGetSpecialties } from '../../../services/specialty.service';
+import { getCategories } from '../../../lib/category';
+import { getSpecialties } from '../../../lib/specialty';
 import AdminClient from './AdminClient';
 
 export default async function AdminPage() {
@@ -10,8 +10,8 @@ export default async function AdminPage() {
     adminGetPosts({ page: 1, limit: 5 }),
     adminGetAdvices({ page: 1, limit: 5 }),
     adminGetReviews({ page: 1, limit: 5 }),
-    apiGetCategories(),
-    apiGetSpecialties(),
+    getCategories(),
+    getSpecialties(),
   ]);
 
   return (

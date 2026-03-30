@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { Users } from 'lucide-react';
 import { getUser } from '../../../../lib/getUser';
 import { getMyGuideProfile } from '../../../../lib/guide';
-import { apiGetSpecialties } from '../../../../services/specialty.service';
+import { getSpecialties } from '../../../../lib/specialty';
 import GuideProfileForm from './GuideProfileForm';
 
 export default async function GuideProfilePage() {
@@ -12,7 +12,7 @@ export default async function GuideProfilePage() {
 
   const [existing, availableSpecialties] = await Promise.all([
     getMyGuideProfile(),
-    apiGetSpecialties(),
+    getSpecialties(),
   ]);
 
   return (

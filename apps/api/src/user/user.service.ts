@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -60,39 +60,4 @@ export class UserService {
     return user;
   }
 
-  async getSavedGuideIds(userId: string): Promise<string[]> {
-    const user = await this.userModel
-      .findById(userId)
-      .select('savedGuides')
-      .lean();
-    if (!user) return [];
-    return ((user as any).savedGuides ?? []).map((id: Types.ObjectId) =>
-      id.toString(),
-    );
-  }
-
-  async toggleSavedGuide(
-    userId: string,
-    guideProfileId: string,
-  ): Promise<{ saved: boolean }> {
-    const user = await this.userModel.findById(userId).select('savedGuides');
-    if (!user) throw new NotFoundException('Utilisateur introuvable');
-
-    const gid = new Types.ObjectId(guideProfileId);
-    const isSaved = (user as any).savedGuides.some((id: Types.ObjectId) =>
-      id.equals(gid),
-    );
-
-    if (isSaved) {
-      await this.userModel.findByIdAndUpdate(userId, {
-        $pull: { savedGuides: gid },
-      });
-    } else {
-      await this.userModel.findByIdAndUpdate(userId, {
-        $addToSet: { savedGuides: gid },
-      });
-    }
-
-    return { saved: !isSaved };
-  }
 }

@@ -1,24 +1,21 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import {
-  apiAdminCreateCategory,
-  apiAdminUpdateCategory,
-  apiAdminDeleteCategory,
-} from '../services/category.service';
+import { getAuthApi } from '../services/api.server';
 import { parseApiError } from '../services/api';
 import type { Category } from '../types/category';
 
-async function getToken(): Promise<string> {
-  const cookieStore = await cookies();
-  return cookieStore.get('access_token')?.value ?? '';
+export async function getCategories(): Promise<Category[]> {
+  const authApi = await getAuthApi();
+  const { data } = await authApi.get<Category[]>('/categories');
+  return data;
 }
 
 export async function adminCreateCategory(
   payload: { name: string; color?: string },
 ): Promise<{ success: true; data: Category } | { success: false; error: string }> {
   try {
-    const data = await apiAdminCreateCategory(await getToken(), payload);
+    const authApi = await getAuthApi();
+    const { data } = await authApi.post<Category>('/categories', payload);
     return { success: true, data };
   } catch (e) {
     return { success: false, error: parseApiError(e) };
@@ -30,7 +27,8 @@ export async function adminUpdateCategory(
   payload: { name?: string; color?: string },
 ): Promise<{ success: true; data: Category } | { success: false; error: string }> {
   try {
-    const data = await apiAdminUpdateCategory(await getToken(), id, payload);
+    const authApi = await getAuthApi();
+    const { data } = await authApi.patch<Category>(`/categories/${id}`, payload);
     return { success: true, data };
   } catch (e) {
     return { success: false, error: parseApiError(e) };
@@ -41,7 +39,8 @@ export async function adminDeleteCategory(
   id: string,
 ): Promise<{ success: true } | { success: false; error: string }> {
   try {
-    await apiAdminDeleteCategory(await getToken(), id);
+    const authApi = await getAuthApi();
+    await authApi.delete(`/categories/${id}`);
     return { success: true };
   } catch (e) {
     return { success: false, error: parseApiError(e) };

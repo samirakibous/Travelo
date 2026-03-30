@@ -8,36 +8,21 @@ import { Model, Types } from 'mongoose';
 import { Post, PostDocument } from './entities/post.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { QueryPostDto } from './dto/query-post.dto';
 import { Role } from '../auth/enums/role.enum';
 
 @Injectable()
 export class PostService {
   constructor(@InjectModel(Post.name) private postModel: Model<PostDocument>) {}
 
-  async findAll(query: QueryPostDto) {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 10;
-    const skip = (page - 1) * limit;
+  async findAll() {
+    const data = await this.postModel
+      .find()
+      .populate('author', 'firstName lastName role')
+      .populate('category')
+      .sort({ createdAt: -1 })
+      .lean();
 
-    const filter: Record<string, any> = {};
-    if (query.category) {
-      filter.category = new Types.ObjectId(query.category);
-    }
-
-    const [data, total] = await Promise.all([
-      this.postModel
-        .find(filter)
-        .populate('author', 'firstName lastName role')
-        .populate('category')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      this.postModel.countDocuments(filter),
-    ]);
-
-    return { data, total, page, limit };
+    return { data, total: data.length };
   }
 
   async create(

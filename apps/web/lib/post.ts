@@ -1,21 +1,25 @@
 'use server';
 
-import {
-  apiCreatePost,
-  apiUpdatePost,
-  apiDeletePost,
-  apiVotePost,
-} from '../services/post.server.service';
+import { getAuthApi } from '../services/api.server';
 import { parseApiError } from '../services/api';
-import type { Post } from '../types/post';
+import type { Post, PostsResponse } from '../types/post';
 
 type ActionResult<T = void> =
   | { success: true; data: T }
   | { success: false; error: string };
 
+export async function getPosts(): Promise<PostsResponse> {
+  const authApi = await getAuthApi();
+  const { data } = await authApi.get<PostsResponse>('/posts');
+  return data;
+}
+
 export async function createPost(formData: FormData): Promise<ActionResult<Post>> {
   try {
-    const data = await apiCreatePost(formData);
+    const authApi = await getAuthApi();
+    const { data } = await authApi.post<Post>('/posts', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return { success: true, data };
   } catch (error) {
     return { success: false, error: parseApiError(error) };
@@ -27,7 +31,10 @@ export async function updatePost(
   formData: FormData,
 ): Promise<ActionResult<Post>> {
   try {
-    const data = await apiUpdatePost(postId, formData);
+    const authApi = await getAuthApi();
+    const { data } = await authApi.patch<Post>(`/posts/${postId}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return { success: true, data };
   } catch (error) {
     return { success: false, error: parseApiError(error) };
@@ -36,7 +43,8 @@ export async function updatePost(
 
 export async function deletePost(postId: string): Promise<ActionResult> {
   try {
-    await apiDeletePost(postId);
+    const authApi = await getAuthApi();
+    await authApi.delete(`/posts/${postId}`);
     return { success: true, data: undefined };
   } catch (error) {
     return { success: false, error: parseApiError(error) };
@@ -48,10 +56,10 @@ export async function votePost(
   type: 'up' | 'down',
 ): Promise<ActionResult<{ upvotes: number; downvotes: number; userVote: 'up' | 'down' | null }>> {
   try {
-    const data = await apiVotePost(postId, type);
+    const authApi = await getAuthApi();
+    const { data } = await authApi.post(`/posts/${postId}/vote`, { type });
     return { success: true, data };
   } catch (error) {
     return { success: false, error: parseApiError(error) };
   }
 }
-

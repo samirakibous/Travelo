@@ -1,30 +1,14 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import {
-  apiAdminGetStats,
-  apiAdminGetUsers,
-  apiAdminUpdateRole,
-  apiAdminToggleActive,
-  apiAdminDeleteUser,
-  apiAdminGetPosts,
-  apiAdminDeletePost,
-  apiAdminGetAdvices,
-  apiAdminDeleteAdvice,
-  apiAdminGetReviews,
-  apiAdminDeleteReview,
-} from '../services/admin.service';
+import { getAuthApi } from '../services/api.server';
 import { parseApiError } from '../services/api';
 import type { AdminStats, AdminUser, AdminPost, AdminAdvice, AdminReview, AdminPagedResponse } from '../types/admin';
 
-async function getToken(): Promise<string> {
-  const cookieStore = await cookies();
-  return cookieStore.get('access_token')?.value ?? '';
-}
-
 export async function adminGetStats(): Promise<AdminStats | null> {
   try {
-    return await apiAdminGetStats(await getToken());
+    const authApi = await getAuthApi();
+    const { data } = await authApi.get<AdminStats>('/admin/stats');
+    return data;
   } catch {
     return null;
   }
@@ -33,7 +17,9 @@ export async function adminGetStats(): Promise<AdminStats | null> {
 export async function adminGetUsers(
   params: { page?: number; limit?: number; search?: string } = {},
 ): Promise<AdminPagedResponse<AdminUser>> {
-  return apiAdminGetUsers(await getToken(), params);
+  const authApi = await getAuthApi();
+  const { data } = await authApi.get<AdminPagedResponse<AdminUser>>('/admin/users', { params });
+  return data;
 }
 
 export async function adminUpdateRole(
@@ -41,7 +27,8 @@ export async function adminUpdateRole(
   role: string,
 ): Promise<{ success: true; data: AdminUser } | { success: false; error: string }> {
   try {
-    const data = await apiAdminUpdateRole(await getToken(), userId, role);
+    const authApi = await getAuthApi();
+    const { data } = await authApi.patch<AdminUser>(`/admin/users/${userId}/role`, { role });
     return { success: true, data };
   } catch (e) {
     return { success: false, error: parseApiError(e) };
@@ -52,7 +39,8 @@ export async function adminDeleteUser(
   userId: string,
 ): Promise<{ success: true } | { success: false; error: string }> {
   try {
-    await apiAdminDeleteUser(await getToken(), userId);
+    const authApi = await getAuthApi();
+    await authApi.delete(`/admin/users/${userId}`);
     return { success: true };
   } catch (e) {
     return { success: false, error: parseApiError(e) };
@@ -63,7 +51,8 @@ export async function adminToggleActive(
   userId: string,
 ): Promise<{ success: true; isActive: boolean } | { success: false; error: string }> {
   try {
-    const data = await apiAdminToggleActive(await getToken(), userId);
+    const authApi = await getAuthApi();
+    const { data } = await authApi.patch<{ id: string; isActive: boolean }>(`/admin/users/${userId}/toggle-active`, {});
     return { success: true, isActive: data.isActive };
   } catch (e) {
     return { success: false, error: parseApiError(e) };
@@ -73,14 +62,17 @@ export async function adminToggleActive(
 export async function adminGetPosts(
   params: { page?: number; limit?: number } = {},
 ): Promise<AdminPagedResponse<AdminPost>> {
-  return apiAdminGetPosts(await getToken(), params);
+  const authApi = await getAuthApi();
+  const { data } = await authApi.get<AdminPagedResponse<AdminPost>>('/admin/posts', { params });
+  return data;
 }
 
 export async function adminDeletePost(
   postId: string,
 ): Promise<{ success: true } | { success: false; error: string }> {
   try {
-    await apiAdminDeletePost(await getToken(), postId);
+    const authApi = await getAuthApi();
+    await authApi.delete(`/admin/posts/${postId}`);
     return { success: true };
   } catch (e) {
     return { success: false, error: parseApiError(e) };
@@ -90,14 +82,17 @@ export async function adminDeletePost(
 export async function adminGetAdvices(
   params: { page?: number; limit?: number } = {},
 ): Promise<AdminPagedResponse<AdminAdvice>> {
-  return apiAdminGetAdvices(await getToken(), params);
+  const authApi = await getAuthApi();
+  const { data } = await authApi.get<AdminPagedResponse<AdminAdvice>>('/admin/advices', { params });
+  return data;
 }
 
 export async function adminDeleteAdvice(
   adviceId: string,
 ): Promise<{ success: true } | { success: false; error: string }> {
   try {
-    await apiAdminDeleteAdvice(await getToken(), adviceId);
+    const authApi = await getAuthApi();
+    await authApi.delete(`/admin/advices/${adviceId}`);
     return { success: true };
   } catch (e) {
     return { success: false, error: parseApiError(e) };
@@ -107,14 +102,17 @@ export async function adminDeleteAdvice(
 export async function adminGetReviews(
   params: { page?: number; limit?: number } = {},
 ): Promise<AdminPagedResponse<AdminReview>> {
-  return apiAdminGetReviews(await getToken(), params);
+  const authApi = await getAuthApi();
+  const { data } = await authApi.get<AdminPagedResponse<AdminReview>>('/admin/reviews', { params });
+  return data;
 }
 
 export async function adminDeleteReview(
   reviewId: string,
 ): Promise<{ success: true } | { success: false; error: string }> {
   try {
-    await apiAdminDeleteReview(await getToken(), reviewId);
+    const authApi = await getAuthApi();
+    await authApi.delete(`/admin/reviews/${reviewId}`);
     return { success: true };
   } catch (e) {
     return { success: false, error: parseApiError(e) };
